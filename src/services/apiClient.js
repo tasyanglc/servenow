@@ -1,4 +1,5 @@
 import { mockTasks, mockCustomerSlas } from '../lib/mockData';
+import { calculateTaskStatus } from '../lib/taskUtils';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
