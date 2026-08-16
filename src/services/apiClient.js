@@ -148,5 +148,72 @@ export const apiClient = {
         error: error.message
       };
     }
+  },
+
+  /**
+   * Fetch aggregated data for the Manager Dashboard
+   */
+  getTeamDashboardData: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        let overdueCount = 0;
+        let atRiskCount = 0;
+        let blockedCount = 0;
+        const exceptions = [];
+        const escalations = [];
+        const workload = {};
+        
+        let completedSla = 0;
+        let totalSlaMeasured = 0;
+
+        mockTasks.forEach(task => {
+          const status = calculateTaskStatus(task.remaining_sla_hours, task.sla_hours);
+          const isBlocked = task.dependencies && task.dependencies.some(d => d.status !== 'Resolved');
+          
+          if (status === 'OVERDUE') overdueCount++;
+          if (status === 'AT RISK') atRiskCount++;
+          if (isBlocked) blockedCount++;
+          
+          if (status === 'OVERDUE' || status === 'AT RISK' || isBlocked) {
+            exceptions.push({ ...task, computedStatus: status, isBlocked });
+          }
+          
+          if (status === 'ON TRACK' || task.status === 'Resolved') {
+            completedSla++;
+          }
+          totalSlaMeasured++;
+
+          const ownerName = task.owner?.name || 'Unassigned';
+          if (!workload[ownerName]) {
+            workload[ownerName] = { name: ownerName, initials: task.owner?.initials || '??', count: 0 };
+          }
+          workload[ownerName].count++;
+
+          if (task.escalation_history && task.escalation_history.length > 0) {
+            task.escalation_history.forEach(esc => {
+              escalations.push({
+                taskId: task.id,
+                taskTitle: task.title,
+                ...esc
+              });
+            });
+          }
+        });
+
+        escalations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        resolve({
+          kpis: {
+            slaAchievement: Math.round((completedSla / totalSlaMeasured) * 100) || 100,
+            overdue: overdueCount,
+            atRisk: atRiskCount,
+            blocked: blockedCount
+          },
+          exceptions: exceptions.sort((a, b) => a.remaining_sla_hours - b.remaining_sla_hours),
+          workload: Object.values(workload).sort((a, b) => a.name.localeCompare(b.name)),
+          escalations: escalations.slice(0, 5)
+        });
+      }, 400);
+    });
   }
 };
