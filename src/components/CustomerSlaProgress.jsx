@@ -1,5 +1,5 @@
 import React from 'react';
-import SlaCountdown from './SlaCountdown';
+import SlaCountdown from './ui/SlaCountdown';
 
 export default function CustomerSlaProgress({ customerSla, activeTaskId }) {
   if (!customerSla) return null;
