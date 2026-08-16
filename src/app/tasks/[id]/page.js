@@ -6,6 +6,7 @@ import SlaCountdown from '../../../components/ui/SlaCountdown';
 import ActivityHistory from '../../../components/ui/ActivityHistory';
 import PageHeader from '../../../components/ui/PageHeader';
 import CustomerSlaProgress from '../../../components/CustomerSlaProgress';
+import AiRiskAnalysis from '../../../components/AiRiskAnalysis';
 
 export default function TaskDetailPage({ params }) {
   const router = useRouter();
@@ -104,6 +105,8 @@ export default function TaskDetailPage({ params }) {
 
         {/* Right Sidebar Column */}
         <div className="space-y-6">
+          <AiRiskAnalysis task={task} />
+
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-4">Ownership</h3>
             <div className="flex items-center gap-3">
