@@ -1,1 +1,5 @@
-'use client'; import DashboardLayout from '../../components/DashboardLayout'; import { KnowledgeHub } from '../../components/operations/OperationalViews'; export default function Page(){ return <DashboardLayout><KnowledgeHub /></DashboardLayout>; }
+'use client';
+import DashboardLayout from '../../components/DashboardLayout';
+import KnowledgeWorkspace from '../../components/operations/KnowledgeWorkspace';
+
+export default function Page() { return <DashboardLayout><KnowledgeWorkspace /></DashboardLayout>; }
