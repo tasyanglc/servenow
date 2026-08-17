@@ -1,139 +1,40 @@
 'use client';
-import React, { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiClient } from '../../../services/apiClient';
-import SlaCountdown from '../../../components/ui/SlaCountdown';
-import ActivityHistory from '../../../components/ui/ActivityHistory';
-import PageHeader from '../../../components/ui/PageHeader';
-import CustomerSlaProgress from '../../../components/CustomerSlaProgress';
-import AiRiskAnalysis from '../../../components/AiRiskAnalysis';
-import TaskOperationalContext from '../../../components/operations/TaskOperationalContext';
 
+import { useEffect, useMemo, useState, use } from 'react';
+import Link from 'next/link';
 import DashboardLayout from '../../../components/DashboardLayout';
+import AiRiskAnalysis from '../../../components/AiRiskAnalysis';
+import { apiClient } from '../../../services/apiClient';
+import { calculateTaskStatus, formatHours } from '../../../lib/taskUtils';
+
+const statusStyle = { 'ON TRACK': 'bg-emerald-50 text-emerald-700', 'AT RISK': 'bg-amber-50 text-amber-700', OVERDUE: 'bg-rose-50 text-rose-700', Resolved: 'bg-emerald-50 text-emerald-700', Open: 'bg-blue-50 text-blue-700' };
+const Badge = ({ children, className = '' }) => <span className={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${className}`}>{children}</span>;
+const Avatar = ({ name, initials }) => <span title={name} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">{initials || name?.split(' ').map(part => part[0]).join('').slice(0, 2) || '?'}</span>;
 
 export default function TaskDetailPage({ params }) {
-  const router = useRouter();
-  const [task, setTask] = useState(null);
-  const [customerSla, setCustomerSla] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // Unwrap params using React.use() as per Next.js 15+ constraints
-  const unwrappedParams = use(params);
-  const id = unwrappedParams.id;
-
-  useEffect(() => {
-    Promise.all([
-      apiClient.getTaskById(id),
-      apiClient.getCustomerSlaContext(id)
-    ])
-      .then(([taskData, slaData]) => {
-        setTask(taskData);
-        setCustomerSla(slaData);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [id]);
-
-  if (loading) return <div className="p-8 text-center text-slate-500">Loading task details...</div>;
-  if (error || !task) return <div className="p-8 text-center text-rose-500">Task not found.</div>;
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6 max-w-5xl">
-        <div className="flex justify-between items-start">
-          <PageHeader 
-            title={task.title} 
-            subtitle={`${task.id} • ${task.task_type} • ${task.customer}`}
-            backTo={() => router.back()}
-          />
-          <div className="flex flex-col items-end gap-2">
-            {task.task_priority === "Critical" && (
-              <span className="text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded border border-rose-200">
-                CRITICAL PRIORITY
-              </span>
-            )}
-            <SlaCountdown remainingSlaHours={task.remaining_sla_hours} slaHours={task.sla_hours} />
-          </div>
-        </div>
-
-        <CustomerSlaProgress customerSla={customerSla} activeTaskId={task.id} />
-        <TaskOperationalContext taskId={task.id} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Column */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-4">Task Definition</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Responsibility</span>
-                  <p className="text-sm text-slate-700">{task.responsibility || "Not specified."}</p>
-                </div>
-                
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Expected Output</span>
-                  <p className="text-sm text-slate-700">{task.expected_output || "Not specified."}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-4">Dependencies</h3>
-              
-              {!task.dependencies || task.dependencies.length === 0 ? (
-                <p className="text-sm text-slate-500 italic">No dependencies logged.</p>
-              ) : (
-                <div className="space-y-3">
-                  {task.dependencies.map(dep => (
-                    <div key={dep.id} className="flex justify-between items-center p-3 rounded bg-slate-50 border border-slate-100">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-slate-700">{dep.task_id}</span>
-                        <span className="text-[10px] text-slate-500">Owned by: {dep.owner}</span>
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded ${
-                        dep.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' : 
-                        dep.status === 'Delayed' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {dep.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Sidebar Column */}
-          <div className="space-y-6">
-            <AiRiskAnalysis task={task} />
-
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-4">Ownership</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-700">
-                  {task.owner?.initials || "??"}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-slate-800">{task.owner?.name || "Unassigned"}</span>
-                  <span className="text-xs text-slate-500">{task.department}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-4">Activity & Escalation Trail</h3>
-              <div className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
-                <ActivityHistory activities={task.activity_history} escalations={task.escalation_history} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+  const { id } = use(params); const [task, setTask] = useState(); const [customerSla, setCustomerSla] = useState(); const [activeTab, setActiveTab] = useState('Overview'); const [menuOpen, setMenuOpen] = useState(false); const [comment, setComment] = useState(''); const [notice, setNotice] = useState('');
+  useEffect(() => { Promise.all([apiClient.getTaskById(id), apiClient.getCustomerSlaContext(id)]).then(([loadedTask, sla]) => { setTask(loadedTask); setCustomerSla(sla); }).catch(() => setTask(null)); }, [id]);
+  const taskStatus = useMemo(() => task ? (task.status === 'Resolved' ? 'Resolved' : calculateTaskStatus(task.remaining_sla_hours, task.sla_hours)) : 'Open', [task]);
+  const events = useMemo(() => task ? [...(task.activity_history || []).map(item => ({ ...item, type: 'activity' })), ...(task.escalation_history || []).map(item => ({ ...item, type: 'escalation' }))].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) : [], [task]);
+  const complete = async () => { await apiClient.updateTask(id, { status: 'Resolved' }); setTask(current => ({ ...current, status: 'Resolved', activity_history: [{ timestamp: new Date().toISOString(), action: 'Task marked complete', user: current.owner?.name || 'Team member' }, ...(current.activity_history || [])] })); setNotice('Task marked as complete.'); };
+  const addComment = () => { if (!comment.trim()) return; setTask(current => ({ ...current, activity_history: [{ timestamp: new Date().toISOString(), action: 'Comment added', user: current.owner?.name || 'Team member', reason: comment.trim() }, ...(current.activity_history || [])] })); setComment(''); setNotice('Comment added to the task timeline.'); };
+  if (task === undefined) return <DashboardLayout><div className="grid h-64 place-items-center text-sm text-slate-500">Loading task details...</div></DashboardLayout>;
+  if (!task) return <DashboardLayout><div className="grid h-64 place-items-center text-sm text-rose-600">Task not found.</div></DashboardLayout>;
+  const relatedTasks = (customerSla?.internal_tasks || []).filter(item => item.id !== task.id).slice(0, 3);
+  const subTasks = task.dependencies?.length ? task.dependencies : [{ id: `${task.id}-review`, task_id: 'Review task output', owner: task.owner?.name, status: taskStatus === 'Resolved' ? 'Resolved' : 'Pending' }, { id: `${task.id}-confirm`, task_id: 'Confirm acceptance criteria', owner: task.owner?.name, status: 'Pending' }];
+  const description = task.responsibility || `Complete the work required for ${task.customer} and document the agreed outcome.`;
+  return <DashboardLayout><section className="mx-auto max-w-[1480px] space-y-4 pb-4">
+    <header className="flex flex-wrap items-start justify-between gap-4"><div><nav className="flex items-center gap-2 text-xs text-slate-500"><Link href="/tasks" className="hover:text-blue-600">Tasks</Link><span>/</span><Link href="/tasks" className="hover:text-blue-600">All Tasks</Link><span>/</span><span className="font-medium text-slate-700">Task Details</span></nav><div className="mt-5 flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight text-slate-950">{task.title}</h1><Badge className={statusStyle[taskStatus] || statusStyle.Open}>{taskStatus === 'Resolved' ? 'Completed' : taskStatus}</Badge></div><p className="mt-2 text-xs text-slate-500">{task.id} &middot; {task.task_type} &middot; Created for {task.customer}</p></div><div className="flex gap-2"><button onClick={complete} disabled={taskStatus === 'Resolved'} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Mark Complete</button><button onClick={() => setMenuOpen(value => !value)} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">More Actions</button></div></header>
+    {notice && <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"><span>{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss message">x</button></div>}
+    {menuOpen && <div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3 text-xs text-slate-600"><button onClick={() => { setActiveTab('Comments'); setMenuOpen(false); }} className="rounded-md bg-white px-3 py-2 shadow-sm">Add comment</button><Link href="/interventions" className="rounded-md bg-white px-3 py-2 shadow-sm">Open intervention center</Link><Link href="/escalations" className="rounded-md bg-white px-3 py-2 shadow-sm">View escalations</Link></div>}
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_282px]"><div className="space-y-4"><article className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm"><div className="flex overflow-x-auto border-b border-slate-100 px-5">{['Overview', `Subtasks (${subTasks.length})`, `Comments (${events.filter(item => item.action?.toLowerCase().includes('comment')).length})`, 'SLA Context', 'Activity Log'].map(tab => <button onClick={() => setActiveTab(tab.split(' (')[0])} key={tab} className={`shrink-0 border-b-2 px-4 py-4 text-xs font-medium ${activeTab === tab.split(' (')[0] ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{tab}</button>)}</div>
+        {activeTab === 'Overview' && <><div className="p-5"><h2 className="text-sm font-semibold text-slate-900">Task Description</h2><p className="mt-3 max-w-4xl text-sm leading-6 text-slate-600">{description}</p><h3 className="mt-6 text-xs font-semibold text-slate-800">Expected Output</h3><p className="mt-2 text-sm text-slate-600">{task.expected_output || 'The agreed task outcome is documented and ready for review.'}</p><h3 className="mt-6 text-xs font-semibold text-slate-800">Acceptance Criteria</h3><ul className="mt-3 space-y-2">{['Work is reviewed against its documented requirement', 'Any dependencies and risks are clearly recorded', 'The owner confirms the expected output', 'Customer or project evidence is available when required'].map(item => <li className="flex items-center gap-2 text-xs text-slate-600" key={item}><span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-50 text-[9px] text-emerald-600">OK</span>{item}</li>)}</ul></div><div className="grid gap-5 border-t border-slate-100 p-5 md:grid-cols-2"><div className="space-y-3 text-xs"><div className="grid grid-cols-[120px_1fr] gap-3"><span className="text-slate-500">Project</span><Link href="/projects" className="font-medium text-blue-600">{task.customer} delivery</Link></div><div className="grid grid-cols-[120px_1fr] gap-3"><span className="text-slate-500">Priority</span><span><Badge className={task.task_priority === 'Critical' || task.task_priority === 'High' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}>{task.task_priority}</Badge></span></div><div className="grid grid-cols-[120px_1fr] gap-3"><span className="text-slate-500">Status</span><span><Badge className={statusStyle[taskStatus] || statusStyle.Open}>{taskStatus}</Badge></span></div><div className="grid grid-cols-[120px_1fr] gap-3"><span className="text-slate-500">Estimated Time</span><span className="font-medium text-slate-700">{task.estimated_task_hours || '-'}h</span></div></div><div className="space-y-3 text-xs"><div className="grid grid-cols-[100px_1fr] gap-3"><span className="text-slate-500">Assignee</span><span className="flex items-center gap-2"><Avatar name={task.owner?.name} initials={task.owner?.initials} /><span><b className="font-medium text-slate-800">{task.owner?.name || 'Unassigned'}</b><small className="block text-[10px] text-slate-500">{task.department}</small></span></span></div><div className="grid grid-cols-[100px_1fr] gap-3"><span className="text-slate-500">Due Date</span><span className={taskStatus === 'OVERDUE' ? 'font-medium text-rose-600' : 'font-medium text-slate-700'}>{task.deadline || 'Not scheduled'}</span></div><div className="grid grid-cols-[100px_1fr] gap-3"><span className="text-slate-500">SLA</span><span><b className={taskStatus === 'OVERDUE' ? 'text-rose-600' : taskStatus === 'AT RISK' ? 'text-amber-600' : 'text-emerald-600'}>{formatHours(task.remaining_sla_hours)} remaining</b><div className="mt-1 h-1.5 w-28 rounded bg-slate-100"><div className={taskStatus === 'OVERDUE' ? 'h-full w-full rounded bg-rose-500' : taskStatus === 'AT RISK' ? 'h-full rounded bg-amber-500' : 'h-full rounded bg-emerald-500'} style={{ width: `${Math.min(100, Math.max(8, (task.remaining_sla_hours / task.sla_hours) * 100))}%` }} /></div></span></div></div></div></>}
+        {activeTab === 'Subtasks' && <TaskRows items={subTasks} />} {activeTab === 'Comments' && <div className="p-5"><div className="flex gap-2"><input value={comment} onChange={event => setComment(event.target.value)} onKeyDown={event => event.key === 'Enter' && addComment()} placeholder="Write a comment..." className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400" /><button onClick={addComment} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white">Add Comment</button></div><div className="mt-5 space-y-3">{events.filter(item => item.action?.toLowerCase().includes('comment')).map((item, index) => <div className="rounded-lg bg-slate-50 p-3" key={index}><p className="text-xs font-medium">{item.user || 'Team member'}</p><p className="mt-1 text-xs text-slate-600">{item.reason || item.action}</p></div>)}{!events.some(item => item.action?.toLowerCase().includes('comment')) && <p className="text-sm text-slate-500">No comments yet.</p>}</div></div>} {activeTab === 'SLA Context' && <div className="p-5"><h2 className="text-sm font-semibold">Customer SLA Context</h2><p className="mt-2 text-sm text-slate-600">{customerSla ? `${customerSla.title} for ${customerSla.customer}` : 'No customer SLA sequence is linked to this task.'}</p>{customerSla && <div className="mt-4 flex flex-wrap gap-2">{customerSla.internal_tasks.map(item => <Link href={`/tasks/${item.id}`} key={item.id} className={`rounded-lg border px-3 py-2 text-xs ${item.id === task.id ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}`}>{item.id} &middot; {item.title}</Link>)}</div>}</div>} {activeTab === 'Activity Log' && <Timeline events={events} />}</article>
+        <article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Subtasks ({subTasks.length})</h2><button onClick={() => setActiveTab('Subtasks')} className="text-[11px] font-semibold text-blue-600">View all</button></div><TaskRows items={subTasks.slice(0, 3)} compact /></article>
+        <div className="rounded-xl border border-slate-100 bg-white p-1 shadow-sm"><AiRiskAnalysis task={task} /></div>
+      </div><aside className="space-y-4"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">Quick Actions</h2><div className="mt-3 space-y-1">{[['Add Comment', () => setActiveTab('Comments')], ['Open Risk Intervention', null, '/interventions'], ['View Project', null, '/projects'], ['View Escalations', null, '/escalations']].map(([label, action, href]) => href ? <Link className="block rounded-lg px-2 py-2 text-xs text-slate-600 hover:bg-slate-50 hover:text-blue-600" href={href} key={label}>{label}</Link> : <button className="block w-full rounded-lg px-2 py-2 text-left text-xs text-slate-600 hover:bg-slate-50 hover:text-blue-600" onClick={action} key={label}>{label}</button>)}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Task Timeline</h2><button onClick={() => setActiveTab('Activity Log')} className="text-[11px] font-semibold text-blue-600">View all</button></div><Timeline events={events.slice(0, 4)} compact /></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">Related Tasks</h2><div className="mt-3 space-y-3">{relatedTasks.length ? relatedTasks.map(item => <Link href={`/tasks/${item.id}`} key={item.id} className="block"><p className="text-xs font-medium text-slate-700 hover:text-blue-600">{item.title}</p><p className="mt-1 text-[10px] text-slate-500">{item.id} &middot; {item.owner}</p></Link>) : <p className="text-xs text-slate-500">No related tasks in this SLA sequence.</p>}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">Attachments</h2><div className="mt-3 space-y-3"><div className="flex items-center justify-between text-xs"><span className="text-slate-600">Task requirements.pdf</span><span className="text-slate-400">PDF</span></div><div className="flex items-center justify-between text-xs"><span className="text-slate-600">Delivery checklist.xlsx</span><span className="text-slate-400">XLSX</span></div></div></article></aside></div>
+  </section></DashboardLayout>;
 }
+
+function TaskRows({ items, compact = false }) { return <div className={compact ? 'mt-3 divide-y divide-slate-100' : 'divide-y divide-slate-100'}>{items.map(item => { const done = item.status === 'Resolved' || item.status === 'Complete'; return <div className="flex items-center gap-3 px-5 py-3" key={item.id}><span className={`grid h-4 w-4 place-items-center rounded-full border text-[8px] ${done ? 'border-emerald-300 bg-emerald-50 text-emerald-600' : 'border-slate-300 text-slate-300'}`}>{done ? 'OK' : ''}</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium text-slate-700">{item.task_id}</p><p className="mt-1 text-[10px] text-slate-500">{item.owner || 'Unassigned'}</p></div><Badge className={done ? 'bg-emerald-50 text-emerald-700' : item.status === 'Delayed' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'}>{done ? 'Completed' : item.status}</Badge></div>; })}</div>; }
+function Timeline({ events, compact = false }) { return <div className={`mt-4 space-y-4 ${compact ? 'max-h-72 overflow-y-auto' : 'p-5'}`}>{events.length ? events.map((event, index) => <div className="relative flex gap-3 pl-1" key={`${event.timestamp}-${index}`}><span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${event.type === 'escalation' ? 'bg-rose-500' : 'bg-blue-500'}`} /><div className="min-w-0"><p className="text-xs font-medium text-slate-700">{event.action}</p><p className="mt-1 text-[10px] text-slate-500">{event.user || 'System'} &middot; {event.timestamp ? new Date(event.timestamp).toLocaleString('id-ID') : 'Recently'}</p>{!compact && event.reason && <p className="mt-2 rounded bg-slate-50 p-2 text-xs text-slate-600">{event.reason}</p>}</div></div>) : <p className="text-xs text-slate-500">No activity recorded.</p>}</div>; }
