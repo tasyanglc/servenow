@@ -1,6 +1,7 @@
 import React from 'react';
 
 export default function RiskBadge({ level }) {
+  const labels = { HIGH: 'TINGGI', MEDIUM: 'SEDANG', LOW: 'RENDAH' };
   const getStyle = (lvl) => {
     switch (lvl?.toUpperCase()) {
       case 'HIGH': return 'bg-rose-100 text-rose-700 border-rose-200';
@@ -12,7 +13,7 @@ export default function RiskBadge({ level }) {
 
   return (
     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getStyle(level)}`}>
-      {level || "Unknown"}
+      {labels[level?.toUpperCase()] || level || "BELUM DIKETAHUI"}
     </span>
   );
 }

@@ -16,11 +16,11 @@ export default function Page() {
     <DashboardLayout>
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Company Task Board</h1>
-          <p className="text-sm text-slate-500">Live operational view across all departments.</p>
+          <h1 className="text-xl font-bold text-slate-800">All Tasks</h1>
+          <p className="text-sm text-slate-500">Lihat tugas yang sedang dikerjakan oleh seluruh tim.</p>
         </div>
         <div className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 text-xs font-semibold shadow-sm">
-          Active Identity: {activeRole}
+          Peran aktif: {activeRole}
         </div>
       </div>
 
@@ -31,12 +31,12 @@ export default function Page() {
           <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-              <span className="text-xs font-bold text-slate-700 tracking-wider">ON TRACK</span>
+              <span className="text-xs font-bold text-slate-700 tracking-wider">SESUAI RENCANA</span>
             </div>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{onTrackTasks.length}</span>
           </div>
           {onTrackTasks.map(task => <TaskCard key={task.id} task={task} />)}
-          {onTrackTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No tasks</div>}
+          {onTrackTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">Belum ada tugas</div>}
         </div>
 
         {/* At Risk Column */}
@@ -44,12 +44,12 @@ export default function Page() {
           <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <span className="text-xs font-bold text-slate-700 tracking-wider">AT RISK</span>
+              <span className="text-xs font-bold text-slate-700 tracking-wider">BERISIKO</span>
             </div>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{atRiskTasks.length}</span>
           </div>
           {atRiskTasks.map(task => <TaskCard key={task.id} task={task} />)}
-          {atRiskTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No tasks</div>}
+          {atRiskTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">Belum ada tugas</div>}
         </div>
 
         {/* Overdue Column */}
@@ -57,12 +57,12 @@ export default function Page() {
           <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-              <span className="text-xs font-bold text-slate-700 tracking-wider">OVERDUE</span>
+              <span className="text-xs font-bold text-slate-700 tracking-wider">TERLAMBAT</span>
             </div>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{overdueTasks.length}</span>
           </div>
           {overdueTasks.map(task => <TaskCard key={task.id} task={task} />)}
-          {overdueTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No tasks</div>}
+          {overdueTasks.length === 0 && <div className="text-center text-xs text-slate-400 py-4">Belum ada tugas</div>}
         </div>
 
       </div>

@@ -27,13 +27,13 @@ export default function DashboardLayout({ children }) {
       <AppShell>
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 max-w-2xl mx-auto my-12 text-center space-y-4 shadow-sm">
           <span className="text-4xl">🛡️</span>
-          <h1 className="text-xl font-black text-rose-800 tracking-tight">Access Denied</h1>
+          <h1 className="text-xl font-black text-rose-800 tracking-tight">Akses Tidak Diizinkan</h1>
           <p className="text-xs text-rose-600 leading-relaxed">
-            Your active role <strong>{activeRole}</strong> ({userConfig.title}) does not have permission to access the path <code>{pathname}</code>. 
+            Peran aktif Anda, <strong>{activeRole}</strong> ({userConfig.title}), tidak memiliki akses ke halaman <code>{pathname}</code>.
           </p>
           <div className="pt-2">
             <p className="text-[10px] text-slate-400 italic">
-              ServeNow Workforce OS security logs recorded this attempt. Please contact system admin to elevate privileges.
+              Percobaan ini dicatat. Hubungi administrator sistem bila Anda memerlukan akses.
             </p>
           </div>
         </div>
