@@ -95,7 +95,7 @@ export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPat
         {!isCollapsed && (
           <div className="flex flex-col whitespace-nowrap">
             <span className="text-white font-bold text-sm tracking-tight leading-tight">ServeNow</span>
-            <span className="text-slate-400 text-[10px] tracking-wider uppercase">Sistem Operasional Tim</span>
+            <span className="text-slate-400 text-[10px] tracking-wider uppercase">Workforce OS</span>
           </div>
         )}
       </div>
