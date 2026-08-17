@@ -17,6 +17,10 @@ const domains = {
   blueprints: sectorBlueprints,
   decisionMatrixRules,
   customerFrictions,
+  users: [
+    ...leadership.map((person) => ({ id: `USR-${person.id}`, name: person.name, email: `${person.name.toLowerCase().replaceAll(' ', '.')}@servenow.io`, role: person.title.replace(' & Product', ''), title: person.title, initials: person.name.split(' ').map((part) => part[0]).join('').slice(0, 2), department: person.department, status: 'Active' })),
+    ...employees.map((person) => ({ id: `USR-${person.id}`, name: person.name, email: `${person.name.toLowerCase().replaceAll(' ', '.')}@servenow.io`, role: `Karyawan ${person.department}`, title: person.department === 'Teknologi' ? 'Software Engineer' : person.department === 'Implementasi' ? 'Implementation Specialist' : person.department === 'Support' ? 'Support Specialist' : person.department === 'Sales' ? 'Sales Executive' : 'Administration Officer', initials: person.initials, department: person.department, status: 'Active' })),
+  ],
 };
 
 const projectIdForTask = (taskId) => ({ 'TSK-1042': 'PRJ-ACME', 'TSK-1045': 'PRJ-DELTA', 'TSK-1050': 'PRJ-OMEGA' }[taskId] || null);

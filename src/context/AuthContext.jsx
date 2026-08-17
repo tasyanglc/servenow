@@ -26,21 +26,19 @@ export const ROLE_CONFIG = {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [activeRole, setActiveRole] = useState('Direktur Utama');
+  const [activeRole, setActiveRole] = useState(null);
   const [isRoleReady, setIsRoleReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const savedRole = window.localStorage.getItem('servenow-active-role');
-    if (savedRole && ROLE_CONFIG[savedRole]) setActiveRole(savedRole);
-    setIsRoleReady(true);
+    fetch('/api/auth/session').then(response => response.json()).then(({ user }) => {
+      if (user?.role && ROLE_CONFIG[user.role]) setActiveRole(user.role);
+      else router.replace('/login');
+    }).catch(() => router.replace('/login')).finally(() => setIsRoleReady(true));
   }, []);
 
   const changeRole = (role) => {
-    setActiveRole(role);
-    window.localStorage.setItem('servenow-active-role', role);
-    const config = ROLE_CONFIG[role];
-    router.push(config.defaultPath);
+    if (ROLE_CONFIG[role]) { setActiveRole(role); router.push(ROLE_CONFIG[role].defaultPath); }
   };
 
   return (
@@ -48,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       activeRole, 
       isRoleReady,
       changeRole, 
-      userConfig: ROLE_CONFIG[activeRole], 
+      userConfig: ROLE_CONFIG[activeRole] || ROLE_CONFIG['Direktur Utama'], 
       allRoles: ROLE_CONFIG 
     }}>
       {children}
