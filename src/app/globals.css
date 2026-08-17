@@ -21,6 +21,14 @@ body {
   letter-spacing: 0.005em;
 }
 
+input, select, textarea { max-width: 100%; }
+
+@media (max-width: 639px) {
+  body { font-size: 15px; }
+  table { font-size: 12px; }
+  .responsive-stack { grid-template-columns: 1fr !important; }
+}
+
 /* The UI relies on hierarchy rather than heavy weight. Reserve 700 for rare emphasis. */
 .font-bold,
 .font-extrabold {
