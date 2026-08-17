@@ -34,7 +34,7 @@ export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPat
   };
 
   return <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:w-auto lg:translate-x-0 lg:shadow-none ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}>
-    <div className="flex h-20 shrink-0 items-center gap-3 border-b border-slate-100 px-6"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-sm"><span className="text-xs font-semibold text-white">SN</span></div>{!isCollapsed && <div className="whitespace-nowrap"><p className="text-lg font-semibold tracking-tight text-slate-950">ServeNow</p><p className="text-[11px] text-slate-500">Workforce OS</p></div>}</div>
+    <div className="flex h-20 shrink-0 items-center border-b border-slate-100 px-6">{isCollapsed ? <img src="/servenow-logo.png" alt="ServeNow" className="h-9 w-9 object-cover object-left" /> : <img src="/servenow-logo.png" alt="ServeNow Workforce OS" className="h-11 w-auto max-w-full object-contain object-left" />}</div>
     <nav className="custom-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">{isMounted && NAVIGATION.map((item, index) => {
       if (item.type === 'header') return sectionHasAccessibleLink(index) ? (isCollapsed ? <div key={item.name} className="my-2 h-px bg-slate-100" /> : <p key={item.name} className="mb-1 mt-3 px-3 text-[10px] font-semibold tracking-[0.14em] text-slate-400">{item.name}</p>) : null;
       if (item.cLevelOnly && !allowedPaths.includes('/overview')) return null;
