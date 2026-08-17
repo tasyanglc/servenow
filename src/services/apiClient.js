@@ -462,6 +462,16 @@ export const apiClient = {
     });
   },
 
+  getDealById: async (dealId) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const deal = mockDeals.find(item => item.id === dealId);
+        if (deal) resolve({ ...deal });
+        else reject(new Error("Deal not found"));
+      }, 200);
+    });
+  },
+
   /**
    * Fetch Customer Zero execution stats & friction feed
    */

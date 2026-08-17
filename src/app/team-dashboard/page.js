@@ -9,16 +9,19 @@ import RecentEscalations from '../../components/dashboard/RecentEscalations';
 import AiWeeklySummary from '../../components/dashboard/AiWeeklySummary';
 
 import DashboardLayout from '../../components/DashboardLayout';
+import { operationsService } from '../../services/operationsService';
 
 export default function TeamDashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [monitoring, setMonitoring] = useState(null);
 
   useEffect(() => {
     apiClient.getTeamDashboardData().then(dashboardData => {
       setData(dashboardData);
       setLoading(false);
     });
+    operationsService.getMonitoring().then(setMonitoring);
   }, []);
 
   if (loading) {
@@ -59,6 +62,15 @@ export default function TeamDashboardPage() {
             status={data.kpis.blocked > 0 ? "AT RISK" : "ON TRACK"} 
           />
         </div>
+
+        {monitoring && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Projects</span><p className="mt-1 text-2xl font-bold">{monitoring.projects.length}</p><p className="text-xs text-slate-500">progress aggregated from tasks</p></div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Workflow progress</span><p className="mt-1 text-2xl font-bold">{monitoring.workflows.length}</p><p className="text-xs text-slate-500">active standardized workflows</p></div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Capacity watch</span><p className="mt-1 text-2xl font-bold">{monitoring.capacity.filter(employee => employee.workloadRatio >= 90).length}</p><p className="text-xs text-slate-500">employees at 90%+ load</p></div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Bottlenecks</span><p className="mt-1 text-2xl font-bold">{monitoring.bottlenecks.length}</p><p className="text-xs text-slate-500">delayed dependency chains</p></div>
+          </div>
+        )}
 
         {/* Main Operational Grids */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

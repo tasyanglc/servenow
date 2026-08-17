@@ -7,6 +7,7 @@ import ActivityHistory from '../../../components/ui/ActivityHistory';
 import PageHeader from '../../../components/ui/PageHeader';
 import CustomerSlaProgress from '../../../components/CustomerSlaProgress';
 import AiRiskAnalysis from '../../../components/AiRiskAnalysis';
+import TaskOperationalContext from '../../../components/operations/TaskOperationalContext';
 
 import DashboardLayout from '../../../components/DashboardLayout';
 
@@ -60,6 +61,7 @@ export default function TaskDetailPage({ params }) {
         </div>
 
         <CustomerSlaProgress customerSla={customerSla} activeTaskId={task.id} />
+        <TaskOperationalContext taskId={task.id} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content Column */}

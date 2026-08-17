@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/apiClient';
+import { operationsService } from '../services/operationsService';
 
 // Technical feature to operational translation mapper
 const featureTranslationMap = {
@@ -31,6 +32,8 @@ export default function AiRiskAnalysis({ task }) {
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [decision, setDecision] = useState(null);
+  const [reason, setReason] = useState('Manager reviewed model recommendation and task context.');
 
   useEffect(() => {
     if (!task) return;
@@ -38,6 +41,11 @@ export default function AiRiskAnalysis({ task }) {
     apiClient.predictTaskRisk(task)
       .then(res => {
         setPrediction(res);
+        const dependencyDelayed = task.dependencies?.some(dep => dep.status === 'Delayed');
+        operationsService.getCapacityRecommendations(task.id).then(candidates => {
+          const owner = candidates.find(candidate => candidate.initials === task.owner?.initials);
+          setDecision(operationsService.decide({ riskBand: res.risk_band, slaState: task.remaining_sla_hours < 0 ? 'OVERDUE' : task.remaining_sla_hours / task.sla_hours < .25 ? 'AT RISK' : 'ON TRACK', dependencyDelayed, workloadRatio: owner?.workloadRatio, priority: task.task_priority, complexity: task.task_complexity }));
+        });
         setLoading(false);
       })
       .catch(() => {
@@ -48,11 +56,7 @@ export default function AiRiskAnalysis({ task }) {
   const handleConfirmAction = async () => {
     setConfirming(true);
     try {
-      // Simulate confirmed action payload to API
-      await apiClient.updateTask(task.id, {
-        ai_action_confirmed: true,
-        confirmed_action: prediction?.recommended_action
-      });
+      await operationsService.confirmIntervention({ taskId: task.id, action: decision?.action || prediction?.recommended_action, reason });
       setConfirmed(true);
     } catch (err) {
       console.error(err);
@@ -148,7 +152,9 @@ export default function AiRiskAnalysis({ task }) {
           {/* Recommended Action */}
           <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
             <span className="block text-[9px] uppercase font-bold text-indigo-600 tracking-wider mb-1">Recommended Action</span>
-            <p className="text-xs font-semibold text-slate-800 mb-3">{prediction.recommended_action}</p>
+            <p className="text-xs font-semibold text-slate-800 mb-1">{decision?.action || prediction.recommended_action}</p>
+            <p className="text-[10px] text-slate-500 mb-3">{decision?.reason || 'Model recommendation pending context.'}</p>
+            <input value={reason} onChange={(event) => setReason(event.target.value)} aria-label="Manager intervention reason" className="mb-2 w-full rounded border border-slate-200 p-2 text-[11px]" />
             
             <div className="flex gap-2">
               <button 
@@ -160,7 +166,7 @@ export default function AiRiskAnalysis({ task }) {
                     : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50'
                 }`}
               >
-                {confirming ? 'Confirming...' : confirmed ? '✓ Action Confirmed' : 'Confirm Action'}
+                {confirming ? 'Recording...' : confirmed ? '✓ Intervention Recorded' : 'Confirm Manager Decision'}
               </button>
             </div>
           </div>

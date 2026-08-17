@@ -1,0 +1,1 @@
+'use client'; import { use } from 'react'; import DashboardLayout from '../../../components/DashboardLayout'; import { ProjectDetail } from '../../../components/operations/OperationalViews'; export default function Page({params}){ return <DashboardLayout><ProjectDetail id={use(params).id}/></DashboardLayout>; }

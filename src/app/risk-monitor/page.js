@@ -3,12 +3,20 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../services/apiClient';
+import { operationsService } from '../../services/operationsService';
+import Link from 'next/link';
 
 export default function RiskMonitorPage() {
   const { activeRole } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [predictions, setPredictions] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmedTask, setConfirmedTask] = useState(null);
+
+  const confirmRecommendation = async (task, prediction) => {
+    await operationsService.confirmIntervention({ taskId: task.id, action: prediction?.recommended_action || 'Review / Coach', reason: 'Manager confirmed recommendation from Risk Monitor.' });
+    setConfirmedTask(task.id);
+  };
 
   useEffect(() => {
     // 1. Fetch tasks asynchronously
@@ -86,7 +94,7 @@ export default function RiskMonitorPage() {
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{task.id}</span>
                       <span className="text-[9px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{task.task_type}</span>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-800">{task.title}</h3>
+                    <Link href={`/tasks/${task.id}`} className="text-sm font-semibold text-indigo-600 hover:underline">{task.title}</Link>
                     <p className="text-xs text-slate-500 mt-1">Owner: {task.owner?.name}</p>
                   </div>
                 </div>
@@ -139,8 +147,8 @@ export default function RiskMonitorPage() {
                       </p>
                     </div>
                     {/* PRD constraint: Manager must confirm action */}
-                    <button className="w-full mt-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded shadow-sm transition-colors">
-                      Confirm Action
+                    <button onClick={() => confirmRecommendation(task, pred)} disabled={confirmedTask === task.id} className="w-full mt-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded shadow-sm transition-colors disabled:opacity-60">
+                      {confirmedTask === task.id ? 'Intervention Recorded' : 'Confirm Manager Decision'}
                     </button>
                   </div>
 

@@ -1,0 +1,1 @@
+'use client'; import DashboardLayout from '../../components/DashboardLayout'; import { WorkflowLibrary } from '../../components/operations/OperationalViews'; export default function Page(){ return <DashboardLayout><WorkflowLibrary /></DashboardLayout>; }

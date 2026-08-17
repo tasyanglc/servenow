@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../services/apiClient';
 import PageHeader from '../../components/ui/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
+import Link from 'next/link';
 
 export default function SalesPage() {
   const { userConfig } = useAuth();
@@ -167,7 +168,7 @@ export default function SalesPage() {
                 <tbody className="divide-y divide-slate-100">
                   {deals.map(deal => (
                     <tr key={deal.id} className="hover:bg-slate-50">
-                      <td className="p-4 font-medium text-slate-800">{deal.account}</td>
+                      <td className="p-4 font-medium text-slate-800"><Link href={`/sales/deals/${deal.id}`} className="text-indigo-600 hover:underline">{deal.account}</Link></td>
                       <td className="p-4 text-slate-600">{deal.owner}</td>
                       <td className="p-4">
                         <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 font-medium">

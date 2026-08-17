@@ -13,7 +13,7 @@ export const ROLE_CONFIG = {
     defaultPath: "/overview",
     allowedPaths: [
       "/overview", "/tasks", "/risk-monitor", "/root-causes", "/sales", 
-      "/customer-zero", "/organization", "/escalations"
+      "/customer-zero", "/organization", "/escalations", "/customers", "/projects", "/workflows", "/knowledge", "/outcomes", "/pilots"
     ]
   },
   "Manager": {
@@ -24,7 +24,7 @@ export const ROLE_CONFIG = {
     defaultPath: "/team-dashboard",
     allowedPaths: [
       "/team-dashboard", "/my-work", "/team-tasks", "/risk-monitor", 
-      "/interventions", "/workload", "/escalations"
+      "/interventions", "/workload", "/escalations", "/customers", "/projects", "/workflows", "/knowledge", "/outcomes", "/pilots", "/tasks"
     ]
   },
   "Employee": {
@@ -34,7 +34,7 @@ export const ROLE_CONFIG = {
     color: "bg-sky-500",
     defaultPath: "/my-work",
     allowedPaths: [
-      "/my-work", "/my-performance", "/team-status"
+      "/my-work", "/my-performance", "/team-status", "/tasks", "/projects", "/workflows", "/knowledge"
     ]
   },
   "Sales": {
@@ -44,7 +44,7 @@ export const ROLE_CONFIG = {
     color: "bg-orange-500",
     defaultPath: "/sales/pipeline",
     allowedPaths: [
-      "/sales", "/sales/pipeline", "/customer-zero", "/my-work"
+      "/sales", "/sales/pipeline", "/customer-zero", "/my-work", "/customers", "/projects", "/pilots"
     ]
   },
   "Admin": {
@@ -54,7 +54,7 @@ export const ROLE_CONFIG = {
     color: "bg-slate-700",
     defaultPath: "/admin/users",
     allowedPaths: [
-      "/admin/users", "/admin/roles", "/admin/sla-rules", "/admin/escalation-rules", "/admin/audit-log"
+      "/admin/users", "/admin/roles", "/admin/sla-rules", "/admin/escalation-rules", "/admin/audit-log", "/customers", "/projects", "/workflows", "/knowledge", "/outcomes", "/pilots"
     ]
   }
 };

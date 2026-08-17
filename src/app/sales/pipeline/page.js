@@ -4,6 +4,7 @@ import DashboardLayout from '../../../components/DashboardLayout';
 import { useAuth } from '../../../context/AuthContext';
 import { apiClient } from '../../../services/apiClient';
 import PageHeader from '../../../components/ui/PageHeader';
+import Link from 'next/link';
 
 export default function SalesPipelinePage() {
   const { userConfig } = useAuth();
@@ -57,7 +58,7 @@ export default function SalesPipelinePage() {
                     <div className="text-center py-8 text-[11px] text-slate-400 italic">No deals</div>
                   ) : (
                     stageDeals.map(deal => (
-                      <div key={deal.id} className="p-3 rounded bg-white border border-slate-200 shadow-sm flex flex-col gap-2 relative hover:shadow-md transition-shadow">
+                      <Link href={`/sales/deals/${deal.id}`} key={deal.id} className="p-3 rounded bg-white border border-slate-200 shadow-sm flex flex-col gap-2 relative hover:shadow-md transition-shadow">
                         
                         <div className="flex justify-between items-start">
                           <span className="text-[11px] font-bold text-slate-800 leading-tight pr-4">
@@ -92,7 +93,7 @@ export default function SalesPipelinePage() {
                           </span>
                         </div>
 
-                      </div>
+                      </Link>
                     ))
                   )}
                 </div>

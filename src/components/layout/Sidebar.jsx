@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export const SIDEBAR_STRUCTURE = [
@@ -7,6 +7,9 @@ export const SIDEBAR_STRUCTURE = [
   { name: "Organization", path: "/organization", icon: "🏢" },
   
   { type: "header", name: "01 OPERATE" },
+  { name: "Customers", path: "/customers", icon: "👥" },
+  { name: "Projects", path: "/projects", icon: "🗂️" },
+  { name: "Workflow Library", path: "/workflows", icon: "⚙️" },
   { name: "All Tasks (Company)", path: "/tasks", icon: "📋" },
   { name: "Team Dashboard", path: "/team-dashboard", icon: "👥" },
   { name: "My Work", path: "/my-work", icon: "👤" },
@@ -22,6 +25,9 @@ export const SIDEBAR_STRUCTURE = [
   { name: "Workload", path: "/workload", icon: "⚖️" },
 
   { type: "header", name: "03 SCALE" },
+  { name: "Knowledge & Playbooks", path: "/knowledge", icon: "📚" },
+  { name: "Workflow Pilots", path: "/pilots", icon: "🧪" },
+  { name: "Outcomes", path: "/outcomes", icon: "✅" },
   { name: "Sales (Company)", path: "/sales", icon: "💼" },
   { name: "Sales Pipeline", path: "/sales/pipeline", icon: "🎯" },
   { name: "Customer Zero", path: "/customer-zero", icon: "✨" },
@@ -35,6 +41,14 @@ export const SIDEBAR_STRUCTURE = [
 ];
 
 export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPaths }) {
+  // The navigation is role-scoped and may change after a development route refresh.
+  // Render a stable shell for SSR/hydration, then hydrate the current role's links.
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <aside className={`bg-[#111827] flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} shrink-0 z-20 shadow-xl overflow-hidden`}>
       <div className="h-16 px-4 flex items-center gap-3 border-b border-slate-800 shrink-0">
@@ -50,7 +64,7 @@ export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPat
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1 custom-scrollbar">
-        {SIDEBAR_STRUCTURE.map((item, idx) => {
+        {isMounted && SIDEBAR_STRUCTURE.map((item, idx) => {
           if (item.type === "header") {
             if (isCollapsed) return <div key={idx} className="h-px bg-slate-800 my-2"></div>;
             return <div key={idx} className="text-[10px] font-bold text-slate-500 tracking-widest uppercase mt-4 mb-1 px-3">{item.name}</div>;
