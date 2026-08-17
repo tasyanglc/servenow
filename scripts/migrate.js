@@ -11,8 +11,9 @@ async function run() {
   const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
-    const sql = fs.readFileSync(path.join(__dirname, '..', 'db', 'migrations', '001_initial.sql'), 'utf8');
-    await client.query(sql);
+    const migrationDirectory = path.join(__dirname, '..', 'db', 'migrations');
+    const migrations = fs.readdirSync(migrationDirectory).filter(file => file.endsWith('.sql')).sort();
+    for (const migration of migrations) await client.query(fs.readFileSync(path.join(migrationDirectory, migration), 'utf8'));
     console.log('Migration selesai: tabel PostgreSQL ServeNow siap digunakan.');
   } finally { await client.end(); }
 }
