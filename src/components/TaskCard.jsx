@@ -64,15 +64,15 @@ const TaskCard = ({ task }) => {
       )}
 
       {/* Footer Info */}
-      <div className="flex justify-between items-end mt-2 pt-2 border-t border-slate-100">
+      <div className="mt-2 space-y-2 border-t border-slate-100 pt-2">
         
         {/* Owner */}
-        <div className="flex flex-col gap-0.5">
+        <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-700">
               {task.owner?.initials || "??"}
             </div>
-            <span className="text-[10px] font-medium text-slate-700 truncate max-w-[80px]" title={task.owner?.name}>
+            <span className="truncate text-[10px] font-medium text-slate-700" title={task.owner?.name}>
               {task.owner?.name || "Unassigned"}
             </span>
           </div>
@@ -81,11 +81,9 @@ const TaskCard = ({ task }) => {
           )}
         </div>
         
-        {/* SLA Status */}
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
-            {status}
-          </span>
+        {/* SLA Status stays on its own row so narrow board columns never collide. */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{status}</span>
           <SlaCountdown remainingSlaHours={task.remaining_sla_hours} slaHours={task.sla_hours} showLabel={false} />
         </div>
       </div>
@@ -94,4 +92,3 @@ const TaskCard = ({ task }) => {
 };
 
 export default TaskCard;
-
