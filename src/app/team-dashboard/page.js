@@ -1,103 +1,35 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '../../services/apiClient';
-import PageHeader from '../../components/ui/PageHeader';
-import KpiCard from '../../components/ui/KpiCard';
-import WorkloadDistribution from '../../components/dashboard/WorkloadDistribution';
-import ExceptionList from '../../components/dashboard/ExceptionList';
-import RecentEscalations from '../../components/dashboard/RecentEscalations';
-import AiWeeklySummary from '../../components/dashboard/AiWeeklySummary';
 
-import DashboardLayout from '../../components/DashboardLayout';
-import { operationsService } from '../../services/operationsService';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import DashboardLayout from '../../components/DashboardLayout';
+import { apiClient } from '../../services/apiClient';
+import { operationsService } from '../../services/operationsService';
+
+const stateTone = { 'ON TRACK': 'bg-emerald-50 text-emerald-700', 'AT RISK': 'bg-amber-50 text-amber-700', OVERDUE: 'bg-rose-50 text-rose-700', BLOCKED: 'bg-violet-50 text-violet-700' };
+const ProgressBar = ({ value, tone = 'bg-blue-500' }) => <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.min(100, value)}%` }} /></div>;
+const Metric = ({ icon, title, value, note, noteTone = 'text-emerald-600', iconTone = 'bg-blue-50 text-blue-600' }) => <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"><div className="flex items-start gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-semibold ${iconTone}`}>{icon}</span><div><p className="text-[11px] font-semibold text-slate-700">{title}</p><p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{value}</p><p className={`mt-1 text-[10px] font-medium ${noteTone}`}>{note}</p></div></div></article>;
 
 export default function TeamDashboardPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [monitoring, setMonitoring] = useState(null);
-
-  useEffect(() => {
-    apiClient.getTeamDashboardData().then(dashboardData => {
-      setData(dashboardData);
-      setLoading(false);
-    });
-    operationsService.getMonitoring().then(setMonitoring);
-  }, []);
-
-  if (loading) {
-    return <div className="flex h-64 items-center justify-center text-slate-500">Loading dashboard...</div>;
-  }
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6 max-w-7xl">
-        <PageHeader 
-          title="Manager Dashboard" 
-          subtitle="Manage by Exception: Focus on what needs your attention right now."
-        />
-
-        <AiWeeklySummary weeklySummary={data.weeklySummary} />
-
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Link href="/tasks" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Detect</span><span className="text-sm font-semibold">Task Risk Queue</span></Link>
-          <Link href="/tasks" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Analyze</span><span className="text-sm font-semibold">Task Risk Drivers</span></Link>
-          <Link href="/interventions" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Decide</span><span className="text-sm font-semibold">Interventions</span></Link>
-          <Link href="/escalations" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Monitor</span><span className="text-sm font-semibold">Escalations</span></Link>
-        </div>
-
-        {/* KPI Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard 
-            title="Team SLA Achievement" 
-            value={`${data.kpis.slaAchievement}%`} 
-            trend="up" 
-            status={data.kpis.slaAchievement > 80 ? "ON TRACK" : "AT RISK"} 
-          />
-          <KpiCard 
-            title="Exceptions (At Risk)" 
-            value={data.kpis.atRisk} 
-            status={data.kpis.atRisk > 5 ? "AT RISK" : "ON TRACK"} 
-          />
-          <KpiCard 
-            title="Exceptions (Overdue)" 
-            value={data.kpis.overdue} 
-            status={data.kpis.overdue > 0 ? "OVERDUE" : "ON TRACK"} 
-          />
-          <KpiCard 
-            title="Blocked Tasks" 
-            value={data.kpis.blocked} 
-            status={data.kpis.blocked > 0 ? "AT RISK" : "ON TRACK"} 
-          />
-        </div>
-
-        {monitoring && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Projects</span><p className="mt-1 text-2xl font-bold">{monitoring.projects.length}</p><p className="text-xs text-slate-500">progress aggregated from tasks</p></div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Workflow progress</span><p className="mt-1 text-2xl font-bold">{monitoring.workflows.length}</p><p className="text-xs text-slate-500">active standardized workflows</p></div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Capacity watch</span><p className="mt-1 text-2xl font-bold">{monitoring.capacity.filter(employee => employee.workloadRatio >= 90).length}</p><p className="text-xs text-slate-500">employees at 90%+ load</p></div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Bottlenecks</span><p className="mt-1 text-2xl font-bold">{monitoring.bottlenecks.length}</p><p className="text-xs text-slate-500">delayed dependency chains</p></div>
-          </div>
-        )}
-
-        {/* Main Operational Grids */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Manage By Exception - Takes up 2 columns */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[400px]">
-              <ExceptionList exceptions={data.exceptions} />
-              <RecentEscalations escalations={data.escalations} />
-            </div>
-          </div>
-
-          {/* Workload - Takes up 1 column */}
-          <div className="lg:col-span-1 h-[400px]">
-            <WorkloadDistribution workload={data.workload} />
-          </div>
-
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+  const [data, setData] = useState(); const [monitoring, setMonitoring] = useState(); const [filterOpen, setFilterOpen] = useState(false);
+  useEffect(() => { Promise.all([apiClient.getTeamDashboardData(), operationsService.getMonitoring()]).then(([dashboard, operational]) => { setData(dashboard); setMonitoring(operational); }); }, []);
+  const view = useMemo(() => {
+    if (!data || !monitoring) return null;
+    const totalTasks = monitoring.projects.flatMap(project => project.tasks || []).length || data.workload.reduce((total, owner) => total + owner.count, 0);
+    const taskCount = Math.max(1, totalTasks); const done = Math.max(0, taskCount - data.kpis.atRisk - data.kpis.overdue - data.kpis.blocked);
+    return { totalTasks: taskCount, done, workload: monitoring.capacity.slice().sort((a, b) => b.workloadRatio - a.workloadRatio).slice(0, 6), projectRows: monitoring.projects.slice(0, 5), trend: [Math.max(14, done - 14), Math.max(20, done - 10), Math.max(26, done - 6), Math.max(32, done - 3), Math.max(40, done - 1), Math.max(46, done)] };
+  }, [data, monitoring]);
+  if (!view) return <DashboardLayout><div className="grid h-64 place-items-center text-sm text-slate-500">Loading team dashboard...</div></DashboardLayout>;
+  const activities = [...data.escalations.map(item => ({ name: item.user || 'Team member', action: item.action || 'updated an escalation', when: 'Recently', icon: '!', tone: 'bg-rose-50 text-rose-600' })), ...data.exceptions.slice(0, 3).map(item => ({ name: item.owner?.name || 'Team member', action: `updated ${item.title}`, when: item.deadline || 'This week', icon: '+', tone: 'bg-blue-50 text-blue-600' }))].slice(0, 5);
+  const goals = [{ name: 'Improve delivery velocity', value: Math.min(100, data.kpis.slaAchievement), target: 'Target: SLA achievement 96%' }, { name: 'Reduce overdue work', value: Math.max(20, 100 - data.kpis.overdue * 12), target: 'Target: no overdue tasks' }, { name: 'Build team ownership', value: Math.max(35, 100 - data.kpis.workloadImbalances * 8), target: 'Target: balanced workload' }];
+  return <DashboardLayout><section className="mx-auto max-w-[1480px] space-y-4 pb-4">
+    <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight text-slate-950">Team Dashboard</h1><p className="mt-1 text-sm text-slate-500">Overview of your team&apos;s work, performance, and progress.</p></div><div className="flex flex-wrap gap-2"><button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">Calendar&nbsp;&nbsp; May 12 - May 18, 2025</button><button onClick={() => setFilterOpen(value => !value)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">Filter</button><Link href="/tasks" className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm">+ New task</Link></div></header>
+    {filterOpen && <div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 text-xs text-slate-600"><span className="font-semibold text-slate-800">Team view filters</span><button className="rounded-md bg-white px-3 py-1.5 shadow-sm">All projects</button><button className="rounded-md bg-white px-3 py-1.5 shadow-sm">All members</button><Link className="ml-auto font-semibold text-blue-600" href="/tasks">Open task filters &rarr;</Link></div>}
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Metric icon="O" title="Team Members" value={monitoring.capacity.length} note="Active capacity this week" /><Metric icon="OK" title="Tasks Completed" value={view.done} note={`${data.kpis.slaAchievement}% within SLA`} iconTone="bg-emerald-50 text-emerald-600" /><Metric icon="..." title="Tasks In Progress" value={data.kpis.atRisk + data.kpis.blocked} note={`${data.kpis.atRisk} need attention`} noteTone="text-amber-600" iconTone="bg-violet-50 text-violet-600" /><Metric icon="D" title="Upcoming Deadlines" value={data.exceptions.filter(item => item.remaining_sla_hours > 0).length} note="Due in the current week" noteTone="text-slate-500" iconTone="bg-amber-50 text-amber-600" /><Metric icon="!" title="Overdue Tasks" value={data.kpis.overdue} note={data.kpis.overdue ? 'Needs immediate action' : 'No overdue tasks'} noteTone={data.kpis.overdue ? 'text-rose-600' : 'text-emerald-600'} iconTone="bg-rose-50 text-rose-600" /></div>
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-4">
+      <article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-slate-900">Team Progress</h2><Link href="/reports" className="text-[11px] font-semibold text-blue-600">View report</Link></div><div className="mt-5 grid gap-6 lg:grid-cols-2"><div className="flex items-center justify-center gap-6 border-b border-slate-100 pb-5 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6"><div className="grid h-32 w-32 place-items-center rounded-full border-[16px] border-emerald-500"><div className="text-center"><p className="text-2xl font-semibold">{view.totalTasks}</p><p className="text-[10px] text-slate-500">Total tasks</p></div></div><div className="space-y-2.5 text-[11px] text-slate-600">{[['Completed', view.done, 'bg-emerald-500'], ['At risk', data.kpis.atRisk, 'bg-amber-500'], ['Overdue', data.kpis.overdue, 'bg-rose-500'], ['Blocked', data.kpis.blocked, 'bg-violet-500']].map(([label, value, tone]) => <div className="flex w-36 items-center justify-between" key={label}><span className="flex items-center gap-2"><i className={`h-2 w-2 rounded-sm ${tone}`} />{label}</span><span className="font-semibold">{value}</span></div>)}</div></div><div><p className="text-xs font-semibold text-slate-700">Task Completion Trend</p><div className="mt-5 flex h-32 items-end gap-3 border-b border-slate-100 px-2">{view.trend.map((value, index) => <div className="flex flex-1 flex-col items-center gap-2" key={index}><span className="text-[9px] font-medium text-blue-600">{value}</span><div className="w-full rounded-t bg-blue-500/90" style={{ height: `${Math.max(12, value)}%` }} /><span className="text-[9px] text-slate-400">D{index + 1}</span></div>)}</div></div></div></article>
+      <div className="grid gap-4 lg:grid-cols-2"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Team Workload</h2><Link href="/tasks" className="text-[11px] font-semibold text-blue-600">View all</Link></div><div className="mt-4"><div className="grid grid-cols-[minmax(0,1fr)_44px_92px] gap-3 border-b border-slate-100 pb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400"><span>Member</span><span>Tasks</span><span>Workload</span></div>{view.workload.map(member => { const tone = member.workloadRatio >= 85 ? 'bg-rose-500' : member.workloadRatio >= 65 ? 'bg-amber-500' : 'bg-emerald-500'; return <div className="grid grid-cols-[minmax(0,1fr)_44px_92px] items-center gap-3 py-3" key={member.id}><div className="min-w-0"><p className="truncate text-xs font-medium text-slate-800">{member.name}</p><p className="text-[10px] text-slate-500">{member.department}</p></div><span className="text-[11px] text-slate-600">{member.activeTasks?.length || 0}</span><div><div className="flex items-center justify-between text-[10px] text-slate-500"><span>{member.workloadRatio}%</span><span className={member.workloadRatio >= 85 ? 'text-rose-600' : 'text-slate-400'}>{member.workloadRatio >= 85 ? 'High' : 'Balanced'}</span></div><div className="mt-1"><ProgressBar value={member.workloadRatio} tone={tone} /></div></div></div>; })}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Project Overview</h2><Link href="/projects" className="text-[11px] font-semibold text-blue-600">View all</Link></div><div className="mt-4 space-y-4">{view.projectRows.map((project, index) => { const status = project.status === 'Overdue' ? 'OVERDUE' : project.status === 'At risk' ? 'AT RISK' : 'ON TRACK'; return <Link href={`/projects/${project.id}`} className="flex items-center gap-3" key={project.id}><span className={`grid h-8 w-8 place-items-center rounded-lg text-xs text-white ${['bg-blue-500','bg-violet-500','bg-emerald-500','bg-amber-500','bg-pink-500'][index % 5]}`}>P</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium text-slate-800">{project.name}</p><p className="mt-1 text-[10px] text-slate-500">{project.id}</p><div className="mt-2"><ProgressBar value={project.progress} /></div></div><div className="text-right"><p className="text-xs font-semibold text-slate-700">{project.progress}%</p><span className={`mt-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold ${stateTone[status]}`}>{status}</span></div></Link>; })}</div></article></div>
+      <div className="grid gap-4 lg:grid-cols-2"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Announcements</h2><Link href="/knowledge" className="text-[11px] font-semibold text-blue-600">View all</Link></div><div className="mt-4 space-y-3"><div className="rounded-lg bg-blue-50 p-3"><p className="text-xs font-semibold text-slate-800">Weekly delivery review</p><p className="mt-1 text-[11px] text-slate-600">Review priority work and SLA risks before the next planning cycle.</p></div><div className="rounded-lg bg-amber-50 p-3"><p className="text-xs font-semibold text-slate-800">New escalation playbook</p><p className="mt-1 text-[11px] text-slate-600">A revised dependency escalation guide is now available in Knowledge Hub.</p></div></div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Upcoming</h2><Link href="/tasks" className="text-[11px] font-semibold text-blue-600">View calendar</Link></div><div className="mt-3 divide-y divide-slate-100">{data.exceptions.slice(0, 3).map(task => <Link href={`/tasks/${task.id}`} className="flex items-center gap-3 py-3" key={task.id}><span className="grid h-9 w-9 place-items-center rounded-lg bg-rose-50 text-[10px] font-semibold text-rose-600">DUE</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">{task.title}</p><p className="mt-1 text-[10px] text-slate-500">{task.deadline || 'This week'} &middot; {task.owner?.name || 'Unassigned'}</p></div><span className={`rounded px-1.5 py-1 text-[9px] font-semibold ${stateTone[task.computedStatus]}`}>{task.computedStatus}</span></Link>)}</div></article></div>
+    </div><aside className="space-y-4"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Team Activity</h2><Link href="/tasks" className="text-[11px] font-semibold text-blue-600">View all</Link></div><div className="mt-3 divide-y divide-slate-100">{activities.length ? activities.map((activity, index) => <div className="flex gap-3 py-3" key={`${activity.name}-${index}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${activity.tone}`}>{activity.icon}</span><div className="min-w-0 flex-1"><p className="text-xs text-slate-700"><b className="font-semibold">{activity.name}</b> {activity.action}</p><p className="mt-1 text-[10px] text-slate-400">{activity.when}</p></div></div>) : <p className="py-4 text-xs text-slate-500">No recent activity.</p>}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Team Goals</h2><span className="text-[10px] text-slate-500">This quarter</span></div><div className="mt-5 space-y-5">{goals.map((goal, index) => <div key={goal.name}><div className="flex items-center justify-between gap-3"><p className="text-xs font-medium text-slate-700">{goal.name}</p><span className="text-xs font-semibold">{goal.value}%</span></div><div className="mt-2"><ProgressBar value={goal.value} tone={index === 1 ? 'bg-amber-500' : 'bg-emerald-500'} /></div><p className="mt-1 text-[10px] text-slate-500">{goal.target}</p></div>)}</div><Link href="/reports" className="mt-5 block text-center text-[11px] font-semibold text-blue-600">View all goals &rarr;</Link></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">Quick Links</h2><div className="mt-4 grid grid-cols-2 gap-2">{[['Team Tasks','/tasks'],['Team Calendar','/tasks'],['Projects','/projects'],['Reports','/reports'],['Escalations','/escalations'],['Knowledge','/knowledge']].map(([label, href]) => <Link href={href} key={label} className="rounded-lg border border-slate-100 p-3 text-center text-[10px] font-medium text-slate-600 hover:border-blue-200 hover:text-blue-600">{label}</Link>)}</div></article></aside></div>
+  </section></DashboardLayout>;
 }
