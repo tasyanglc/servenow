@@ -1,8 +1,6 @@
 import { mockTasks, mockCustomerSlas } from '../lib/mockData';
 import { calculateTaskStatus } from '../lib/taskUtils';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
 // In-Memory Sales Database
 let mockDeals = [
   {
@@ -171,49 +169,12 @@ export const apiClient = {
    */
   predictTaskRisk: async (task) => {
     try {
-      // Map frontend task object to backend TaskInput schema
-      const payload = {
-        task_type: task.task_type || "Support",
-        task_priority: task.task_priority || "Medium",
-        customer_tier: "Standard", // Defaulting as it might not be in basic task info
-        employee_department: "Support", // Defaulting
-        employee_experience_years: 3.0,
-        employee_historical_sla_rate: 0.95,
-        current_open_tasks: 5,
-        current_workload_ratio: 0.8,
-        task_complexity: task.task_complexity || 5,
-        estimated_task_hours: task.estimated_task_hours || 10,
-        sla_hours: task.sla_hours || 24,
-        remaining_sla_hours: task.remaining_sla_hours || 12,
-        dependency_count: task.dependency_count || 0,
-        dependency_delay_hours: task.dependency_delay_hours || 0,
-        reassignment_count: task.reassignment_count || 0,
-        similar_task_avg_hours: 8.5,
-        employee_avg_completion_hours: 8.0,
-        task_queue_age_hours: task.task_queue_age_hours || 2,
-        customer_escalation_history: 0,
-        cross_department_required: task.cross_department_required ? 1.0 : 0.0,
-        peak_workload_flag: task.peak_workload_flag ? 1.0 : 0.0,
-        estimated_vs_sla_ratio: (task.estimated_task_hours || 10) / (task.sla_hours || 24),
-        workload_pressure_score: 0.8 * 5, // workload_ratio * open_tasks
-        dependency_pressure_score: (task.dependency_count || 0) * (task.dependency_delay_hours || 0),
-        employee_speed_ratio: 8.0 / 8.5, // avg_completion / similar_avg
-        sla_buffer_ratio: (task.remaining_sla_hours || 12) / (task.sla_hours || 24),
-        queue_pressure: (task.task_queue_age_hours || 2) * (task.task_priority === "Critical" ? 2 : 1),
-        employee_historical_sla_rate_missing: 0,
-        similar_task_avg_hours_missing: 0
-      };
-
-      const response = await fetch(`${BASE_URL}/predict`, {
+      const response = await fetch('/api/risk-predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // TODO (Backend Auth): 
-          // 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
-          // The backend FastAPI MUST validate this token, extract the user's role, 
-          // and reject the request (403) if an Employee tries to call an endpoint meant for a Manager.
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ task }),
       });
 
       if (!response.ok) {

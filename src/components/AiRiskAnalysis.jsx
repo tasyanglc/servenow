@@ -97,7 +97,7 @@ export default function AiRiskAnalysis({ task }) {
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
       <div className="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 className="text-sm font-semibold text-slate-800">AI Risk Analysis</h3>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XGBoost / SHAP</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XGBoost / model drivers</span>
       </div>
 
       {isOffline ? (
@@ -128,9 +128,7 @@ export default function AiRiskAnalysis({ task }) {
               <p className="text-xs font-semibold text-slate-800">
                 {translateFeature(primaryCause.feature)}
               </p>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Calculated SHAP impact of +{(primaryCause.impact).toFixed(3)}
-              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Model driver score: {primaryCause.impact.toFixed(1)}</p>
             </div>
           )}
 
