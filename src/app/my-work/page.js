@@ -1,48 +1,20 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../services/apiClient';
-import TaskCard from '../../components/TaskCard';
-
+import { calculateTaskStatus } from '../../lib/taskUtils';
 import DashboardLayout from '../../components/DashboardLayout';
 
+const Metric = ({ label, value, note, tone = 'emerald' }) => <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"><p className="text-xs font-semibold text-slate-600">{label}</p><p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{value}</p><p className={`mt-1 text-[11px] font-medium ${tone === 'rose' ? 'text-rose-600' : 'text-emerald-600'}`}>{note}</p></article>;
+const dateLabel = (date) => date ? new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(new Date(`${date}T00:00:00`)) : 'No due date';
+
 export default function MyWorkPage() {
-  const { userConfig } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch only tasks assigned to the active user
-    apiClient.fetchTasks({ ownerInitials: userConfig.initials }).then(data => {
-      setTasks(data);
-      setLoading(false);
-    });
-  }, [userConfig]);
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">My Work</h1>
-          <p className="text-sm text-slate-500 mt-1">Tasks assigned directly to you.</p>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-64 text-sm text-slate-500">Loading tasks...</div>
-        ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
-            <span className="text-2xl mb-2">🎉</span>
-            <h3 className="text-sm font-semibold text-slate-700">Inbox Zero</h3>
-            <p className="text-xs text-slate-500 mt-1">You have no tasks assigned to you right now.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tasks.map(task => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </div>
-        )}
-      </div>
-    </DashboardLayout>
-  );
+  const { userConfig } = useAuth(); const [tasks, setTasks] = useState(); const [search, setSearch] = useState('');
+  useEffect(() => { apiClient.fetchTasks({ ownerInitials: userConfig.initials }).then(setTasks); }, [userConfig]);
+  const visible = useMemo(() => (tasks || []).filter(task => `${task.title} ${task.customer}`.toLowerCase().includes(search.toLowerCase())), [tasks, search]);
+  if (!tasks) return <DashboardLayout><div className="grid h-48 place-items-center text-sm text-slate-500">Memuat pekerjaan saya…</div></DashboardLayout>;
+  const completed = visible.filter(task => task.status === 'Resolved').length; const overdue = visible.filter(task => calculateTaskStatus(task.remaining_sla_hours, task.sla_hours) === 'OVERDUE').length; const upcoming = visible.filter(task => task.deadline).slice(0, 5);
+  return <DashboardLayout><section className="mx-auto max-w-[1480px] space-y-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight text-slate-950">My Work</h1><p className="mt-1 text-sm text-slate-500">Your personalized workspace to stay focused and get things done.</p></div><div className="flex gap-2"><label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">⌕<input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search anything…" className="w-40 outline-none" /></label><button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">This Week⌄</button></div></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Metric label="Tasks Assigned" value={visible.length} note="↑ 3 vs last week" /><Metric label="Tasks Completed" value={completed} note={`${visible.length ? Math.round(completed / visible.length * 100) : 0}% completion rate`} /><Metric label="Hours Logged" value={`${visible.reduce((sum, task) => sum + (task.estimated_task_hours || 0), 0).toFixed(0)}h`} note="↑ 12% vs last week" /><Metric label="Upcoming Deadlines" value={upcoming.length} note="Due this week" /><Metric label="Overdue Tasks" value={overdue} note={overdue ? 'Needs your attention' : 'All clear'} tone={overdue ? 'rose' : 'emerald'} /></div><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]"><div className="space-y-4"><article className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h2 className="text-sm font-semibold">My Tasks</h2><Link href="/tasks" className="text-[11px] font-semibold text-blue-600">View all tasks →</Link></div><div className="divide-y divide-slate-100">{visible.slice(0, 6).map(task => { const state = calculateTaskStatus(task.remaining_sla_hours, task.sla_hours); return <Link key={task.id} href={`/tasks/${task.id}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"><div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-800">{task.title}</p><p className="mt-1 text-[10px] text-slate-500">{task.customer} · {task.department}</p></div><span className={`rounded px-2 py-1 text-[10px] font-semibold ${state === 'OVERDUE' ? 'bg-rose-50 text-rose-700' : state === 'AT RISK' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>{state}</span><span className="whitespace-nowrap text-[10px] text-slate-500">{dateLabel(task.deadline)}</span></Link>; })}{!visible.length && <p className="p-8 text-center text-sm text-slate-500">No task assigned.</p>}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex justify-between"><h2 className="text-sm font-semibold">Recent Activity</h2><span className="text-[11px] font-semibold text-blue-600">View all activity →</span></div><div className="mt-4 grid gap-3 md:grid-cols-3">{visible.slice(0, 3).map(task => <div key={task.id} className="rounded-lg bg-slate-50 p-3"><p className="text-xs font-medium">Task assigned</p><p className="mt-1 text-[10px] text-slate-500">{task.title}</p></div>)}</div></article></div><aside className="space-y-4"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">My Priorities</h2><div className="mt-3 space-y-3">{visible.slice(0, 5).map((task, index) => <Link key={task.id} href={`/tasks/${task.id}`} className="flex gap-3"><span className="grid h-5 w-5 place-items-center rounded border text-[10px]">{index + 1}</span><div className="min-w-0"><p className="truncate text-xs font-medium">{task.title}</p><p className="text-[10px] text-slate-500">{task.customer}</p></div></Link>)}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex justify-between"><h2 className="text-sm font-semibold">Upcoming Deadlines</h2><Link href="/tasks" className="text-[11px] font-semibold text-blue-600">View calendar</Link></div><div className="mt-3 divide-y divide-slate-100">{upcoming.map(task => <Link key={task.id} href={`/tasks/${task.id}`} className="flex gap-3 py-3"><span className="rounded border border-rose-200 px-2 py-1 text-center text-[10px] font-semibold text-rose-600">{dateLabel(task.deadline)}</span><div><p className="text-xs font-medium">{task.title}</p><p className="text-[10px] text-slate-500">{task.customer}</p></div></Link>)}</div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold">My Workload</h2><div className="mt-5 h-2 rounded bg-slate-100"><div className="h-2 w-2/3 rounded bg-emerald-500" /></div><div className="mt-2 flex justify-between text-[11px] text-slate-500"><span>This week</span><b className="text-emerald-600">Well balanced</b></div></article></aside></div></section></DashboardLayout>;
 }
