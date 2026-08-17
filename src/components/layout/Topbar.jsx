@@ -11,12 +11,9 @@ export default function Topbar() {
   }));
 
   return (
-    <header className="relative z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 shadow-sm">
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-slate-900 leading-tight">Selamat datang, {userConfig.name.split(' ')[0]} 👋</h1>
-      </div>
+    <header className="relative z-50 flex h-20 shrink-0 items-center justify-end border-b border-slate-100 bg-white px-6 md:px-8">
       <div className="relative">
-        <button onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} aria-haspopup="menu" className="flex items-center gap-2 pl-2 border-l border-slate-200">
+        <button onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} aria-haspopup="menu" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-slate-300">
           <div className={`w-8 h-8 rounded-full ${userConfig.color} flex items-center justify-center text-white text-xs font-semibold shadow-sm`}>
             {userConfig.initials}
           </div>

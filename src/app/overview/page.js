@@ -1,218 +1,26 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import DashboardLayout from '../../components/DashboardLayout';
-import { useAuth } from '../../context/AuthContext';
-import { apiClient } from '../../services/apiClient';
-import PageHeader from '../../components/ui/PageHeader';
-import KpiCard from '../../components/ui/KpiCard';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import DashboardLayout from '../../components/DashboardLayout';
+import { apiClient } from '../../services/apiClient';
+import { statusLabel } from '../../lib/taskUtils';
+
+const StatCard = ({ label, value, note, alert = false }) => <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><p className="text-sm font-semibold text-slate-800">{label}</p><p className="mt-5 text-3xl font-semibold tracking-tight text-slate-950">{value}</p><p className={`mt-3 text-xs font-medium ${alert ? 'text-rose-600' : 'text-emerald-600'}`}>{alert ? '●' : '▲'} {note}</p></article>;
+
+function TrendChart() { return <svg viewBox="0 0 590 170" className="mt-5 h-48 w-full" role="img" aria-label="Tren pencapaian SLA"><g stroke="#e8edf5">{[34,76,118,160].map(y => <line key={y} x1="16" x2="572" y1={y} y2={y} />)}</g><path d="M16 139 C65 125 96 119 130 120 S196 109 240 111 S303 95 348 98 S413 84 468 87 S526 76 568 78" fill="none" stroke="#3b82f6" strokeWidth="3" /><path d="M16 122 C65 105 92 91 130 93 S197 74 240 76 S305 58 348 60 S415 42 468 46 S527 32 568 34" fill="none" stroke="#10b981" strokeWidth="3" />{[16,130,240,348,468,568].map((x,i) => <g key={x}><circle cx={x} cy={[122,93,76,60,46,34][i]} r="4.5" fill="#10b981" /><circle cx={x} cy={[139,120,111,98,87,78][i]} r="4.5" fill="#3b82f6" /><text x={x} y="166" textAnchor="middle" className="fill-slate-500 text-[11px]">{['19/05','20/05','21/05','23/05','24/05','25/05'][i]}</text></g>)}<text x="16" y="30" className="fill-slate-500 text-[11px]">100%</text><text x="16" y="72" className="fill-slate-500 text-[11px]">90%</text><text x="16" y="114" className="fill-slate-500 text-[11px]">80%</text></svg>; }
 
 export default function OverviewPage() {
-  const { activeRole } = useAuth();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    apiClient.getExecutiveOverviewData().then(overviewData => {
-      setData(overviewData);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-64 items-center justify-center text-slate-500">Loading Executive Overview...</div>
-      </DashboardLayout>
-    );
-  }
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6 max-w-7xl">
-        <PageHeader 
-          title="Executive Overview" 
-          subtitle="Corporate performance, scaling velocity, and operational self-sufficiency indicators."
-        />
-
-        {/* Executive Key Indicators */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard 
-            title="SLA Achievement" 
-            value={`${data.slaAchievement}%`} 
-            trend="up" 
-            status={data.slaAchievement > 85 ? "ON TRACK" : "AT RISK"} 
-          />
-          <KpiCard 
-            title="Weekly Exceptions" 
-            value={data.weeklyExceptions} 
-            status={data.weeklyExceptions > 5 ? "AT RISK" : "ON TRACK"} 
-          />
-          <KpiCard 
-            title="Pipeline Value" 
-            value={data.pipelineValue} 
-            trend="up"
-            status="ON TRACK"
-          />
-          <KpiCard 
-            title="Director Dependency" 
-            value={data.directorDependency} 
-            status={parseInt(data.directorDependency) > 10 ? "AT RISK" : "ON TRACK"} 
-          />
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Department SLA & Operations - Left Col (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Department Summary */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                <h3 className="text-sm font-semibold text-slate-800 font-sans">Operations by Department</h3>
-              </div>
-              <div className="p-4">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="text-slate-400 font-semibold border-b border-slate-100">
-                      <th className="pb-2">Department</th>
-                      <th className="pb-2">SLA Achievement</th>
-                      <th className="pb-2">Active Tasks</th>
-                      <th className="pb-2 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {data.deptSummary.map(dept => (
-                      <tr key={dept.name} className="hover:bg-slate-50">
-                        <td className="py-2.5 font-medium text-slate-800">{dept.name}</td>
-                        <td className="py-2.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            dept.slaAchievement > 80 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                          }`}>
-                            {dept.slaAchievement}%
-                          </span>
-                        </td>
-                        <td className="py-2.5 text-slate-600 font-mono">{dept.openTasks} tasks</td>
-                        <td className="py-2.5 text-right">
-                          <Link href="/team-tasks" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                            Manage →
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Critical Operational Exceptions */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h3 className="text-sm font-semibold text-slate-800">Critical Operational Exceptions</h3>
-                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Requires Executive Review</span>
-              </div>
-              <div className="p-4">
-                {data.criticalExceptions.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic text-center py-4">No critical exceptions logged.</p>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {data.criticalExceptions.map(exc => (
-                      <div key={exc.id} className="flex justify-between items-center py-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-slate-400">{exc.id}</span>
-                            <span className="text-xs font-semibold text-slate-800">{exc.title}</span>
-                          </div>
-                          <span className="text-[10px] text-slate-500">Client: {exc.customer} • Assigned to: {exc.owner}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                            exc.status === 'OVERDUE' ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
-                          }`}>
-                            {exc.status}
-                          </span>
-                          <Link href={`/tasks/${exc.id}`} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-                            Drill Down →
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Sales & Adoption Summary - Right Col (1/3) */}
-          <div className="space-y-6">
-
-            {/* Director Dependency Meter */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800">Director Dependency</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5">Ratio of open operations requiring direct founder intervention.</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-150 flex flex-col items-center justify-center text-center">
-                <span className="text-3xl font-black text-indigo-900">{data.directorDependency}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Founder Dependency Rate</span>
-                
-                <div className="w-full bg-slate-200 h-1.5 rounded-full mt-4 overflow-hidden">
-                  <div className="bg-indigo-600 h-full rounded-full" style={{ width: data.directorDependency }}></div>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
-                  {parseInt(data.directorDependency) > 10 
-                    ? "⚠️ Higher than target (<5%). Director intervention is acting as a blocker to scaling." 
-                    : "✓ On Track. Operations are successfully decentralized."}
-                </p>
-              </div>
-            </div>
-
-            {/* Customer Zero Health */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <div className="border-b border-slate-100 pb-2">
-                <h3 className="text-sm font-semibold text-slate-800">Customer Zero Adoption</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5">Internal adoption and execution health scores.</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2 bg-slate-50 rounded border border-slate-100">
-                  <span className="block text-[8px] uppercase font-bold text-slate-400">Health</span>
-                  <span className="text-xs font-bold text-slate-800">{data.customerZero.healthScore}</span>
-                </div>
-                <div className="p-2 bg-slate-50 rounded border border-slate-100">
-                  <span className="block text-[8px] uppercase font-bold text-slate-400">NPS score</span>
-                  <span className="text-xs font-bold text-slate-800">+{data.customerZero.nps}</span>
-                </div>
-                <div className="p-2 bg-slate-50 rounded border border-slate-100">
-                  <span className="block text-[8px] uppercase font-bold text-slate-400">Active</span>
-                  <span className="text-xs font-bold text-slate-800">{data.customerZero.activeUsers}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Sales Pipeline Summary */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-              <div className="border-b border-slate-100 pb-2">
-                <h3 className="text-sm font-semibold text-slate-800">Sales Pipeline Value</h3>
-              </div>
-              <div className="space-y-2">
-                {data.salesSummary.map(deal => (
-                  <div key={deal.id} className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-100">
-                    <div>
-                      <span className="font-semibold text-slate-800">{deal.customer}</span>
-                      <span className="block text-[9px] text-slate-400">{deal.stage} • Prob: {deal.probability}</span>
-                    </div>
-                    <span className="font-mono font-bold text-indigo-700">{deal.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+  useEffect(() => { apiClient.getExecutiveOverviewData().then(setData); }, []);
+  if (!data) return <DashboardLayout><div className="grid h-64 place-items-center text-sm text-slate-500">Memuat ringkasan perusahaan…</div></DashboardLayout>;
+  const atRisk = data.weeklyExceptions; const overdue = data.criticalExceptions.filter(item => item.status === 'OVERDUE').length;
+  const total = Math.max(1, data.deptSummary.reduce((sum, item) => sum + item.openTasks, 0)); const colors = ['#2563eb','#f59e0b','#8b5cf6','#06b6d4','#fb7185']; let offset = 0;
+  const slices = data.deptSummary.map((item,index) => ({ ...item, color: colors[index], percent: Math.round(item.openTasks / total * 100) }));
+  return <DashboardLayout><div className="mx-auto max-w-[1440px] space-y-6">
+    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start"><div><h1 className="text-3xl font-semibold tracking-tight text-slate-950">Executive Overview</h1><p className="mt-1 text-sm text-slate-500">Ringkasan kinerja perusahaan dalam satu tampilan.</p></div><div className="flex gap-2"><button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">Minggu ini⌄</button><button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">19 – 25 Mei 2025&nbsp; ◫</button></div></div>
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="SLA Achievement" value={`${data.slaAchievement}%`} note="4.1% dibanding minggu lalu" /><StatCard label="At Risk Tasks" value={atRisk} note="12 tugas baru minggu ini" /><StatCard label="Overdue Tasks" value={overdue} note="Perlu ditangani segera" alert /><StatCard label="Pipeline Value" value={data.pipelineValue} note="11% dibanding minggu lalu" /></section>
+    <section className="grid gap-5 xl:grid-cols-2"><article className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><h2 className="text-lg font-semibold text-slate-900">SLA Achievement Trend</h2><p className="mt-1 text-xs text-slate-500">Perbandingan pencapaian SLA minggu ini dan minggu lalu.</p><TrendChart /><div className="flex justify-end gap-4 text-xs text-slate-600"><span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500" />Minggu ini</span><span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500" />Minggu lalu</span></div></article><article className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><h2 className="text-lg font-semibold text-slate-900">At Risk by Department</h2><p className="mt-1 text-xs text-slate-500">Tugas berisiko yang perlu perhatian per tim.</p><div className="mt-6 flex flex-col items-center gap-7 sm:flex-row"><div className="relative"><svg viewBox="0 0 184 184" className="h-52 w-52 -rotate-90">{slices.map(item => { const result = <circle key={item.name} cx="92" cy="92" r="58" fill="none" stroke={item.color} strokeWidth="14" strokeDasharray={`${item.percent} ${100-item.percent}`} strokeDashoffset={-offset} pathLength="100" />; offset += item.percent; return result; })}</svg><div className="absolute inset-0 grid place-items-center text-center"><b className="text-3xl font-semibold">{atRisk}</b><span className="-mt-8 text-xs text-slate-500">Total</span></div></div><div className="w-full space-y-4">{slices.map(item => <div key={item.name} className="flex items-center justify-between gap-4 text-sm"><span className="flex items-center gap-2 text-slate-600"><i className="h-3 w-3 rounded-sm" style={{background:item.color}} />{item.name}</span><span className="font-medium text-slate-700">{item.openTasks} ({item.percent}%)</span></div>)}</div></div></article></section>
+    <section className="grid gap-5 xl:grid-cols-2"><article className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-slate-900">Critical Exceptions</h2><p className="mt-1 text-xs text-slate-500">Hal yang perlu keputusan atau tindakan segera.</p></div><Link href="/interventions" className="text-sm font-semibold text-blue-600">View all</Link></div><div className="mt-5 divide-y divide-slate-100">{data.criticalExceptions.map(item => <div key={item.id} className="flex items-center justify-between gap-4 py-4"><div className="flex min-w-0 items-start gap-3"><span className={`mt-1 h-3 w-3 rounded-full ${item.status === 'OVERDUE' ? 'bg-rose-500' : 'bg-amber-400'}`} /><div><Link href={`/tasks/${item.id}`} className="text-sm font-semibold text-slate-800 hover:text-blue-600">{item.title}</Link><p className="mt-1 text-xs text-slate-500">{item.customer} · {item.owner}</p></div></div><span className={`rounded-md px-3 py-1 text-[10px] font-semibold ${item.status === 'OVERDUE' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'}`}>{statusLabel(item.status)}</span></div>)}</div></article><article className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><h2 className="text-lg font-semibold text-slate-900">Director Dependency Indicator</h2><p className="mt-1 text-xs text-slate-500">Seberapa sering kegiatan operasional masih perlu keterlibatan direksi.</p><div className="mx-auto mt-8 grid h-52 w-72 place-items-center rounded-t-full border-[14px] border-emerald-600 border-b-0"><div className="text-center"><p className="text-4xl font-semibold text-slate-950">{data.directorDependency}</p><p className="mt-1 text-xs text-slate-500">Total</p><p className="mt-5 text-xs font-medium text-emerald-600">▼ 7% dibanding 30 hari lalu</p></div></div><p className="mt-4 text-center text-sm text-slate-600">Arah yang baik. Terus kurangi ketergantungan pada direksi.</p></article></section>
+  </div></DashboardLayout>;
 }

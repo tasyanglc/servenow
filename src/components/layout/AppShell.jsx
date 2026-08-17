@@ -55,7 +55,7 @@ export default function AppShell({ children }) {
 
   // Authorized Render
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F4F7FE] text-slate-800 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8faff] text-slate-900 font-sans">
       <Sidebar 
         isCollapsed={isSidebarCollapsed} 
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
@@ -64,7 +64,7 @@ export default function AppShell({ children }) {
       />
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 custom-scrollbar">
           {children}
         </main>
       </div>
