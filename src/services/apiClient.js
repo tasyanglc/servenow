@@ -3,6 +3,91 @@ import { calculateTaskStatus } from '../lib/taskUtils';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// In-Memory Sales Database
+let mockDeals = [
+  {
+    id: "DEAL-101",
+    account: "Acme Corporation",
+    owner: "Rian Pratama",
+    stage: "Proposal",
+    value: 500000,
+    probability: 0.90,
+    expectedRevenue: 450000,
+    nextAction: "Deliver SLA terms document",
+    nextActionDeadline: "2026-08-20",
+    lastActivity: "Call with CTO regarding system trust",
+    founderInvolvement: false,
+    progressiveOwnership: "Lead"
+  },
+  {
+    id: "DEAL-102",
+    account: "Delta Co",
+    owner: "Andi Pratama",
+    stage: "Negotiation",
+    value: 340000,
+    probability: 0.70,
+    expectedRevenue: 238000,
+    nextAction: "Founder join co-lead meeting",
+    nextActionDeadline: "2026-08-18",
+    lastActivity: "Email proposal confirmation",
+    founderInvolvement: true,
+    progressiveOwnership: "Co-lead"
+  },
+  {
+    id: "DEAL-103",
+    account: "Omega Inc",
+    owner: "Siti Aisyah",
+    stage: "Demo",
+    value: 400000,
+    probability: 0.50,
+    expectedRevenue: 200000,
+    nextAction: "Prepare CS Module sandbox demo",
+    nextActionDeadline: "2026-08-22",
+    lastActivity: "First discovery call completed",
+    founderInvolvement: true,
+    progressiveOwnership: "Contribute"
+  },
+  {
+    id: "DEAL-104",
+    account: "GigaTech Solutions",
+    owner: "Budi Santoso",
+    stage: "Lead",
+    value: 150000,
+    probability: 0.10,
+    expectedRevenue: 15000,
+    nextAction: "Qualify lead fit",
+    nextActionDeadline: "2026-08-25",
+    lastActivity: "Inbound contact form submitted",
+    founderInvolvement: false,
+    progressiveOwnership: "Observe"
+  }
+];
+
+// In-Memory Customer Zero Frictions Database
+let mockFrictions = [
+  {
+    id: "FRIC-201",
+    friction: "Downstream Support engineers are manually checking SLA remaining timers in Excel.",
+    feedback: "Timers need to be visual on every task card.",
+    improvement: "Implemented SlaCountdown component directly inside TaskCard.",
+    status: "Completed"
+  },
+  {
+    id: "FRIC-202",
+    friction: "Cross-department tasks bounce between teams without a clear chronological handover history.",
+    feedback: "Add Activity timeline in task details page.",
+    improvement: "Built ActivityHistory timeline component mapped from task database.",
+    status: "Completed"
+  },
+  {
+    id: "FRIC-203",
+    friction: "Managers cannot easily spot which upstream task is blocking a Customer SLA delivery.",
+    feedback: "Add a master Customer SLA timeline tracker in the UI.",
+    improvement: "Create CustomerSlaProgress component sequencing all sibling tasks.",
+    status: "Product Improvement"
+  }
+];
+
 export const apiClient = {
   /**
    * Simulates fetching tasks from a backend database.
@@ -343,6 +428,73 @@ export const apiClient = {
             healthScore: "92%"
           }
         });
+      }, 400);
+    });
+  },
+
+  /**
+   * Fetch active deals for sales pipeline
+   */
+  fetchDeals: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...mockDeals]);
+      }, 300);
+    });
+  },
+
+  /**
+   * Update deal stage, next action, etc.
+   */
+  updateDeal: async (dealId, updates) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const dealIndex = mockDeals.findIndex(d => d.id === dealId);
+        if (dealIndex === -1) {
+          return reject(new Error("Deal not found"));
+        }
+        mockDeals[dealIndex] = {
+          ...mockDeals[dealIndex],
+          ...updates
+        };
+        resolve(mockDeals[dealIndex]);
+      }, 300);
+    });
+  },
+
+  /**
+   * Fetch Customer Zero execution stats & friction feed
+   */
+  fetchCustomerZeroData: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          slaAchievement: 94,
+          tasksManaged: 248,
+          atRiskResolutionSpeedHours: 1.2,
+          directorEscalations: 2,
+          efficiencyGain: "+14%",
+          frictions: [...mockFrictions]
+        });
+      }, 300);
+    });
+  },
+
+  /**
+   * Capture a new internal operational friction point
+   */
+  submitFriction: async (frictionText) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newFriction = {
+          id: `FRIC-${200 + mockFrictions.length + 1}`,
+          friction: frictionText,
+          feedback: "Awaiting staff review",
+          improvement: "Under Validation",
+          status: "Validation"
+        };
+        mockFrictions.unshift(newFriction);
+        resolve(newFriction);
       }, 400);
     });
   }
