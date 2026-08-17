@@ -1,6 +1,6 @@
 import 'server-only';
 import { mockCustomerSlas, mockTasks } from './mockData';
-import { customers, decisionMatrixRules, employees, escalationRules, knowledgeItems, leadership, outcomes, pilots, projects, sectorBlueprints, servicePackages, slaRules, workflowTemplates } from './operationalData';
+import { customerFrictions, customers, decisionMatrixRules, employees, escalationRules, knowledgeItems, leadership, outcomes, pilots, projects, sectorBlueprints, servicePackages, slaRules, workflowTemplates } from './operationalData';
 
 const domains = {
   customers,
@@ -16,6 +16,7 @@ const domains = {
   outcomes,
   blueprints: sectorBlueprints,
   decisionMatrixRules,
+  customerFrictions,
 };
 
 const projectIdForTask = (taskId) => ({ 'TSK-1042': 'PRJ-ACME', 'TSK-1045': 'PRJ-DELTA', 'TSK-1050': 'PRJ-OMEGA' }[taskId] || null);

@@ -1,7 +1,7 @@
 import { calculateTaskStatus } from '../lib/taskUtils';
 
-// In-Memory Sales Database
-let mockDeals = [
+// Legacy sales examples retained only as development fixtures; the UI reads /api/deals.
+const legacyDeals = [
   {
     id: "DEAL-101",
     account: "Acme Corporation",
@@ -57,31 +57,6 @@ let mockDeals = [
     lastActivity: "Inbound contact form submitted",
     founderInvolvement: false,
     progressiveOwnership: "Observe"
-  }
-];
-
-// In-Memory Customer Zero Frictions Database
-let mockFrictions = [
-  {
-    id: "FRIC-201",
-    friction: "Downstream Support engineers are manually checking SLA remaining timers in Excel.",
-    feedback: "Timers need to be visual on every task card.",
-    improvement: "Implemented SlaCountdown component directly inside TaskCard.",
-    status: "Completed"
-  },
-  {
-    id: "FRIC-202",
-    friction: "Cross-department tasks bounce between teams without a clear chronological handover history.",
-    feedback: "Add Activity timeline in task details page.",
-    improvement: "Built ActivityHistory timeline component mapped from task database.",
-    status: "Completed"
-  },
-  {
-    id: "FRIC-203",
-    friction: "Managers cannot easily spot which upstream task is blocking a Customer SLA delivery.",
-    feedback: "Add a master Customer SLA timeline tracker in the UI.",
-    improvement: "Create CustomerSlaProgress component sequencing all sibling tasks.",
-    status: "Product Improvement"
   }
 ];
 
@@ -398,36 +373,20 @@ export const apiClient = {
    * Fetch Customer Zero execution stats & friction feed
    */
   fetchCustomerZeroData: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          slaAchievement: 94,
-          tasksManaged: 248,
-          atRiskResolutionSpeedHours: 1.2,
-          directorEscalations: 2,
-          efficiencyGain: "+14%",
-          frictions: [...mockFrictions]
-        });
-      }, 300);
-    });
+    const [tasks, frictions] = await Promise.all([apiClient.fetchTasks(), fetch('/api/operational/customerFrictions').then(response => response.ok ? response.json() : [])]);
+    const historical = tasks.filter(task => task.source === 'historical-csv');
+    const achieved = historical.filter(task => task.historical_actual_breached === false).length;
+    const atRisk = tasks.filter(task => calculateTaskStatus(task.remaining_sla_hours, task.sla_hours) !== 'ON TRACK');
+    return { slaAchievement: Math.round(achieved / Math.max(historical.length, 1) * 100), tasksManaged: tasks.length, atRiskResolutionSpeedHours: atRisk.length ? Math.round(atRisk.reduce((sum, task) => sum + Math.max(0, Number(task.remaining_sla_hours) || 0), 0) / atRisk.length * 10) / 10 : 0, directorEscalations: tasks.filter(task => (task.escalation_history || []).length).length, efficiencyGain: 'Live data', frictions };
   },
 
   /**
    * Capture a new internal operational friction point
    */
   submitFriction: async (frictionText) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newFriction = {
-          id: `FRIC-${200 + mockFrictions.length + 1}`,
-          friction: frictionText,
-          feedback: "Awaiting staff review",
-          improvement: "Under Validation",
-          status: "Validation"
-        };
-        mockFrictions.unshift(newFriction);
-        resolve(newFriction);
-      }, 400);
-    });
+    const newFriction = { id: `FRIC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, friction: frictionText, feedback: 'Menunggu tinjauan staf', improvement: 'Dalam validasi', status: 'Validation' };
+    const response = await fetch('/api/operational/customerFrictions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newFriction) });
+    if (!response.ok) throw new Error('Masukan Customer Zero tidak dapat disimpan.');
+    return response.json();
   }
 };

@@ -86,3 +86,9 @@ export const escalationRules = [
   { id: 'ESC-2', condition: 'SLA remaining time <= 0', threshold: '0 hours', level: 'Overdue Auto-Escalation', recipient: 'Operations Director', trigger: 'overdue' },
   { id: 'ESC-3', condition: 'Dependency delayed', threshold: 'Any delayed predecessor', level: 'Blocker Alert Escalation', recipient: 'Preceding Owner Manager', trigger: 'dependency' }
 ];
+
+export const customerFrictions = [
+  { id: 'FRIC-201', friction: 'Tim support masih memeriksa sisa SLA secara manual.', feedback: 'Timer SLA perlu terlihat pada setiap tugas.', improvement: 'Countdown SLA ditampilkan di kartu tugas.', status: 'Completed' },
+  { id: 'FRIC-202', friction: 'Penyerahan lintas divisi belum selalu memiliki riwayat yang jelas.', feedback: 'Tambahkan lini masa aktivitas pada detail tugas.', improvement: 'Riwayat aktivitas terhubung ke setiap tugas.', status: 'Completed' },
+  { id: 'FRIC-203', friction: 'Manajer sulit melihat dependensi yang menghambat SLA pelanggan.', feedback: 'Butuh pelacakan SLA pelanggan.', improvement: 'Konteks SLA dan dependensi tersedia pada detail tugas.', status: 'Product Improvement' },
+];
