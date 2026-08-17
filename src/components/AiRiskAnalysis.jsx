@@ -5,20 +5,20 @@ import { operationsService } from '../services/operationsService';
 
 // Technical feature to operational translation mapper
 const featureTranslationMap = {
-  "dependency_delay_hours": "Upstream Dependency Delay",
-  "dependency_count": "High Number of Active Dependencies",
-  "dependency_pressure_score": "Critical Path Dependency Pressure",
-  "current_workload_ratio": "High Owner Workload Ratio",
-  "workload_pressure_score": "High Department Workload Pressure",
-  "current_open_tasks": "Owner Task Overload",
-  "employee_experience_years": "Task Complexity Misalignment",
-  "employee_historical_sla_rate": "Owner SLA Rate Volatility",
-  "reassignment_count": "Frequent Task Reassignments (Bouncing)",
-  "task_queue_age_hours": "Task Queue Backlog Age",
-  "queue_pressure": "High Backlog Pressure",
-  "estimated_vs_sla_ratio": "Aggressive SLA vs Work Estimate",
-  "cross_department_required": "Cross-Department Collaboration Overhead",
-  "peak_workload_flag": "System Peak Workload Period"
+  "dependency_delay_hours": "Keterlambatan tugas yang menjadi prasyarat",
+  "dependency_count": "Terlalu banyak tugas yang saling bergantung",
+  "dependency_pressure_score": "Tekanan pada rangkaian tugas penting",
+  "current_workload_ratio": "Beban kerja penanggung jawab tinggi",
+  "workload_pressure_score": "Beban kerja tim sedang tinggi",
+  "current_open_tasks": "Tugas terbuka penanggung jawab terlalu banyak",
+  "employee_experience_years": "Kerumitan tugas belum sesuai pengalaman",
+  "employee_historical_sla_rate": "Pencapaian SLA penanggung jawab tidak stabil",
+  "reassignment_count": "Tugas sering berpindah penanggung jawab",
+  "task_queue_age_hours": "Tugas terlalu lama menunggu dikerjakan",
+  "queue_pressure": "Antrean pekerjaan sedang tinggi",
+  "estimated_vs_sla_ratio": "Waktu SLA terlalu ketat dibanding perkiraan kerja",
+  "cross_department_required": "Membutuhkan koordinasi lintas tim",
+  "peak_workload_flag": "Tim sedang dalam periode beban kerja tinggi"
 };
 
 const translateFeature = (featureName) => {
@@ -33,7 +33,7 @@ export default function AiRiskAnalysis({ task }) {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [decision, setDecision] = useState(null);
-  const [reason, setReason] = useState('Manager reviewed model recommendation and task context.');
+  const [reason, setReason] = useState('Manajer sudah meninjau rekomendasi sistem dan kondisi tugas.');
 
   useEffect(() => {
     if (!task) return;

@@ -32,3 +32,9 @@ export const formatHours = (hours) => {
   
   return (isNegative ? "-" : "") + result.trim();
 };
+
+export const statusLabel = (status) => ({
+  'ON TRACK': 'Sesuai Rencana', 'AT RISK': 'Berisiko', OVERDUE: 'Terlambat',
+  Resolved: 'Selesai', Pending: 'Menunggu', Active: 'Aktif', Available: 'Tersedia', Limited: 'Terbatas',
+  Complete: 'Selesai', 'In progress': 'Berjalan', Ready: 'Siap', Waiting: 'Menunggu'
+}[status] || status);

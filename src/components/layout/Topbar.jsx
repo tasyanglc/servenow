@@ -5,14 +5,15 @@ export default function Topbar() {
   const { activeRole, changeRole, userConfig, allRoles } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const roleGroups = ['C-Level', 'Manager', 'Employee'].map(level => ({
-    level,
+    level: ({ 'C-Level': 'Direksi', Manager: 'Manajer', Employee: 'Karyawan' })[level],
+    sourceLevel: level,
     roles: Object.entries(allRoles).filter(([, config]) => config.level === level)
   }));
 
   return (
     <header className="relative z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 shadow-sm">
       <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-slate-900 leading-tight">Good morning, {userConfig.name.split(' ')[0]} 👋</h1>
+        <h1 className="text-xl font-semibold text-slate-900 leading-tight">Selamat datang, {userConfig.name.split(' ')[0]} 👋</h1>
       </div>
       <div className="relative">
         <button onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} aria-haspopup="menu" className="flex items-center gap-2 pl-2 border-l border-slate-200">
@@ -27,8 +28,8 @@ export default function Topbar() {
         {isOpen && (
           <div role="menu" className="absolute right-0 top-full z-[60] mt-2 w-80 max-h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div className="border-b border-slate-100 bg-white px-4 py-3">
-               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Switch Context (Dev Only)</span>
-               <p className="mt-0.5 text-xs text-slate-500">Choose a role scope to preview its workspace.</p>
+               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Ganti Peran (Khusus Demo)</span>
+               <p className="mt-0.5 text-xs text-slate-500">Pilih peran untuk melihat ruang kerja yang sesuai.</p>
             </div>
             <div className="max-h-[calc(100vh-9.5rem)] overflow-y-auto overscroll-contain py-2 custom-scrollbar">
               {roleGroups.map(group => (
@@ -46,7 +47,7 @@ export default function Topbar() {
                         <span className={`block truncate text-xs ${activeRole === role ? 'font-semibold text-indigo-700' : 'font-medium text-slate-700'}`}>{config.name}</span>
                         <span className="block truncate text-[10px] text-slate-500">{config.title}</span>
                       </div>
-                      {activeRole === role && <span className="text-[10px] font-semibold text-indigo-600">Active</span>}
+                      {activeRole === role && <span className="text-[10px] font-semibold text-indigo-600">Aktif</span>}
                     </button>
                   ))}
                 </div>

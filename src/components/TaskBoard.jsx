@@ -1,6 +1,6 @@
 import React from 'react';
 import TaskCard from './TaskCard';
-import { calculateTaskStatus } from '../lib/taskUtils';
+import { calculateTaskStatus, statusLabel } from '../lib/taskUtils';
 
 export default function TaskBoard({ tasks }) {
   // Group tasks strictly by SLA status
@@ -24,7 +24,7 @@ export default function TaskBoard({ tasks }) {
           <div key={status} className={`flex flex-col gap-3 rounded-xl border ${conf.border} ${conf.bg} p-3 min-h-[500px]`}>
             <div className="flex justify-between items-center px-1 pb-2 border-b border-white/50">
               <h3 className={`text-xs font-bold tracking-widest uppercase ${conf.text}`}>
-                {status}
+                {statusLabel(status)}
               </h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${conf.countBg} ${conf.text}`}>
                 {statusTasks.length}
@@ -33,7 +33,7 @@ export default function TaskBoard({ tasks }) {
             
             <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-1 pb-4">
               {statusTasks.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-400 italic">No tasks {status.toLowerCase()}</div>
+                <div className="text-center py-8 text-xs text-slate-400 italic">Belum ada tugas pada status ini</div>
               ) : (
                 statusTasks.map(task => (
                   <TaskCard key={task.id} task={task} />
