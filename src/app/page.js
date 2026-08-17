@@ -9,8 +9,7 @@ export default function Home() {
   
   useEffect(() => {
     if (isRoleReady && userConfig) {
-      const landingPage = userConfig.level === 'C-Level' ? '/overview' : userConfig.level === 'Manager' ? '/team-dashboard' : '/my-work';
-      router.push(landingPage);
+      router.push(userConfig.defaultPath);
     }
   }, [isRoleReady, userConfig, router]);
 

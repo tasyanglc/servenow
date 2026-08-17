@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { operationsService } from '../../services/operationsService';
 
 const quickLinks = [
-  { path: '/overview', label: 'Ringkasan direksi' }, { path: '/team-dashboard', label: 'Pantauan tim' }, { path: '/projects', label: 'Proyek & alur kerja' }, { path: '/tasks', label: 'Daftar tugas' }, { path: '/risk-monitor', label: 'Pantau risiko' }, { path: '/interventions', label: 'Tindakan perbaikan' }, { path: '/sales', label: 'Alur penjualan' }, { path: '/customers', label: 'Pelanggan' }, { path: '/admin/users', label: 'Administrasi pengguna' }, { path: '/my-work', label: 'Tugas saya' }
+  { path: '/team-dashboard', label: 'Pantauan tim' }, { path: '/projects', label: 'Proyek & alur kerja' }, { path: '/tasks', label: 'Daftar tugas' }, { path: '/risk-monitor', label: 'Pantau risiko' }, { path: '/interventions', label: 'Tindakan perbaikan' }, { path: '/sales', label: 'Alur penjualan' }, { path: '/customers', label: 'Pelanggan' }, { path: '/admin/users', label: 'Administrasi pengguna' }, { path: '/my-work', label: 'Tugas saya' }
 ];
 
 export default function RoleDashboard() {
