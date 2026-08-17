@@ -1,10 +1,10 @@
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export const AuthContext = createContext({});
 
-const common = ['/role-dashboard', '/my-work', '/tasks', '/projects', '/workflows', '/knowledge'];
+const common = ['/my-work', '/tasks', '/projects', '/workflows', '/knowledge'];
 const manager = [...common, '/team-dashboard', '/interventions', '/escalations'];
 
 export const ROLE_CONFIG = {
@@ -25,16 +25,27 @@ export const ROLE_CONFIG = {
 
 export const AuthProvider = ({ children }) => {
   const [activeRole, setActiveRole] = useState('Direktur Utama');
+  const [isRoleReady, setIsRoleReady] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const savedRole = window.localStorage.getItem('servenow-active-role');
+    if (savedRole && ROLE_CONFIG[savedRole]) setActiveRole(savedRole);
+    setIsRoleReady(true);
+  }, []);
 
   const changeRole = (role) => {
     setActiveRole(role);
-    router.push(ROLE_CONFIG[role].defaultPath);
+    window.localStorage.setItem('servenow-active-role', role);
+    const config = ROLE_CONFIG[role];
+    const landingPage = config.level === 'C-Level' ? '/overview' : config.level === 'Manager' ? (config.division === 'Sales' ? '/sales/pipeline' : config.division === 'Administrasi' ? '/admin/users' : '/team-dashboard') : (config.division === 'Sales' ? '/sales/pipeline' : '/my-work');
+    router.push(landingPage);
   };
 
   return (
     <AuthContext.Provider value={{ 
       activeRole, 
+      isRoleReady,
       changeRole, 
       userConfig: ROLE_CONFIG[activeRole], 
       allRoles: ROLE_CONFIG 

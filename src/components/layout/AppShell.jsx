@@ -6,9 +6,11 @@ import Topbar from './Topbar';
 import EmptyState from '../ui/EmptyState';
 
 export default function AppShell({ children }) {
-  const { userConfig } = useAuth();
+  const { userConfig, isRoleReady } = useAuth();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  if (!isRoleReady) return <div className="grid h-screen place-items-center bg-[#f8faff] text-sm text-slate-500">Memuat workspace…</div>;
 
   // Allow root path or dynamic paths without strict checking for prototype convenience
   // In real app, all routes except public ones should be strictly checked against JWT scopes

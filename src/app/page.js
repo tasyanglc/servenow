@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const { userConfig } = useAuth();
+  const { userConfig, isRoleReady } = useAuth();
   
   useEffect(() => {
-    if (userConfig) {
-      router.push(userConfig.defaultPath);
+    if (isRoleReady && userConfig) {
+      const landingPage = userConfig.level === 'C-Level' ? '/overview' : userConfig.level === 'Manager' ? '/team-dashboard' : '/my-work';
+      router.push(landingPage);
     }
-  }, [userConfig, router]);
+  }, [isRoleReady, userConfig, router]);
 
   return <div className="h-screen w-screen flex items-center justify-center bg-[#F4F7FE]">Loading ServeNow Workforce OS...</div>;
 }
