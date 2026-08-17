@@ -42,9 +42,9 @@ export default function AiRiskAnalysis({ task }) {
       .then(res => {
         setPrediction(res);
         const dependencyDelayed = task.dependencies?.some(dep => dep.status === 'Delayed');
-        operationsService.getCapacityRecommendations(task.id).then(candidates => {
+        operationsService.getCapacityRecommendations(task.id).then(async candidates => {
           const owner = candidates.find(candidate => candidate.initials === task.owner?.initials);
-          setDecision(operationsService.decide({ riskBand: res.risk_band, slaState: task.remaining_sla_hours < 0 ? 'OVERDUE' : task.remaining_sla_hours / task.sla_hours < .25 ? 'AT RISK' : 'ON TRACK', dependencyDelayed, workloadRatio: owner?.workloadRatio, priority: task.task_priority, complexity: task.task_complexity }));
+          setDecision(await operationsService.decide({ riskBand: res.risk_band, slaState: task.remaining_sla_hours < 0 ? 'OVERDUE' : task.remaining_sla_hours / task.sla_hours < .25 ? 'AT RISK' : 'ON TRACK', dependencyDelayed, workloadRatio: owner?.workloadRatio, priority: task.task_priority, complexity: task.task_complexity }));
         });
         setLoading(false);
       })

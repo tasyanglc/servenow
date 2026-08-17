@@ -1,6 +1,8 @@
 import model from '../../../model/servenow_sla_breach_xgboost.json';
 import featureMetadata from '../../../model/servenow_feature_list.json';
 import modelMetadata from '../../../model/servenow_model_metadata.json';
+import { getDb } from '../../../lib/db';
+import { ensureOperationalSeed, ensureTaskSeed } from '../../../lib/operationalStore';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,6 +62,37 @@ function buildFeatures(task = {}) {
   return values;
 }
 
+async function enrichTask(task = {}) {
+  if (!task.id) return task;
+  const db = getDb();
+  await Promise.all([ensureTaskSeed(db), ensureOperationalSeed(db, 'employees'), ensureOperationalSeed(db, 'customers')]);
+  const [storedTask, employeeRows, customerRows, taskRows] = await Promise.all([
+    db.query('SELECT data FROM tasks WHERE id=$1', [task.id]),
+    db.query("SELECT data FROM operational_records WHERE domain='employees'"),
+    db.query("SELECT data FROM operational_records WHERE domain='customers'"),
+    db.query('SELECT data, owner_initials, status FROM tasks'),
+  ]);
+  const saved = storedTask.rows[0]?.data || {};
+  const merged = { ...saved, ...task, owner: task.owner || saved.owner };
+  const employee = employeeRows.rows.map((row) => row.data).find((item) => item.initials === merged.owner?.initials);
+  const customer = customerRows.rows.map((row) => row.data).find((item) => item.name === merged.customer);
+  const relatedTasks = taskRows.rows.map((row) => row.data).filter((item) => item.owner?.initials === merged.owner?.initials);
+  const customerTasks = taskRows.rows.map((row) => row.data).filter((item) => item.customer === merged.customer);
+  const historical = relatedTasks.filter((item) => Number.isFinite(Number(item.sla_hours)) && Number.isFinite(Number(item.remaining_sla_hours)));
+  const completedWithinSla = historical.filter((item) => Number(item.remaining_sla_hours) >= 0).length;
+  return {
+    ...merged,
+    employee_department: merged.employee_department || employee?.department || merged.department,
+    employee_experience_years: merged.employee_experience_years ?? employee?.experienceYears,
+    current_workload_ratio: merged.current_workload_ratio ?? (employee ? Number(employee.allocatedHours || 0) / Math.max(1, Number(employee.capacityHours || 40)) : undefined),
+    current_open_tasks: merged.current_open_tasks ?? relatedTasks.filter((item) => !['Resolved', 'Completed', 'Done'].includes(item.status)).length,
+    employee_historical_sla_rate: merged.employee_historical_sla_rate ?? (historical.length ? completedWithinSla / historical.length : undefined),
+    customer_tier: merged.customer_tier || customer?.tier,
+    customer_escalation_history: merged.customer_escalation_history ?? customerTasks.filter((item) => (item.escalation_history || []).length > 0).length,
+    similar_task_avg_hours: merged.similar_task_avg_hours ?? (historical.length ? historical.reduce((sum, item) => sum + (Number(item.estimated_task_hours) || 0), 0) / historical.length : undefined),
+  };
+}
+
 function evaluateTree(tree, features, gains) {
   let node = 0;
   while (tree.left_children[node] !== -1) {
@@ -94,7 +127,15 @@ function predict(task) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    return Response.json(predict(body.task || body));
+    const task = await enrichTask(body.task || body);
+    const result = predict(task);
+    if (task.id) {
+      const actual = typeof task.sla_breached === 'boolean' ? task.sla_breached : Number.isFinite(Number(task.remaining_sla_hours)) ? Number(task.remaining_sla_hours) < 0 : null;
+      await getDb().query(`INSERT INTO risk_predictions (task_id, model_version, input_snapshot, result, actual_sla_breach)
+        VALUES ($1,$2,$3,$4,$5)
+        ON CONFLICT (task_id) DO UPDATE SET model_version=EXCLUDED.model_version, input_snapshot=EXCLUDED.input_snapshot, result=EXCLUDED.result, actual_sla_breach=EXCLUDED.actual_sla_breach, updated_at=NOW()`, [task.id, modelMetadata.model_version || 'xgboost-local', JSON.stringify(task), JSON.stringify(result), actual]);
+    }
+    return Response.json({ ...result, input_source: task.id ? 'PostgreSQL task context' : 'Request payload', model_version: modelMetadata.model_version || 'xgboost-local' });
   } catch (error) {
     console.error('Unable to calculate SLA risk', error);
     return Response.json({ error: 'Prediksi risiko tidak dapat dihitung.' }, { status: 400 });
