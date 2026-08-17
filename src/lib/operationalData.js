@@ -28,11 +28,28 @@ export const projects = [
   { id: 'PRJ-OMEGA', name: 'Omega API Recovery', customerId: 'CUS-OMEGA', packageId: 'PKG-CARE', workflowIds: ['WF-INCIDENT'], taskIds: ['TSK-1050'], scope: 'Recover API performance.', milestones: [{ name: 'Root cause', status: 'Complete' }, { name: 'Resolution', status: 'Overdue' }], slaId: 'CSLA-103', status: 'Overdue', outcomeId: 'OUT-OMEGA', learningIds: ['KN-003'] }
 ];
 
+export const leadership = [
+  { id: 'C-001', name: 'Arif Pratama', title: 'Direktur Utama', level: 'C-Level', department: 'Executive', accountabilities: ['Strategi perusahaan', 'Penjualan besar', 'Negosiasi harga', 'Keputusan produk'] },
+  { id: 'C-002', name: 'Nadia Putri', title: 'Direktur Teknologi & Product', level: 'C-Level', department: 'Teknologi', accountabilities: ['Arsitektur sistem', 'Product management', 'Technical review', 'Keamanan'] },
+  { id: 'C-003', name: 'Budi Santoso', title: 'Direktur Operasional', level: 'C-Level', department: 'Operasional', accountabilities: ['Implementasi', 'Support', 'Vendor', 'Kontrak'] },
+  { id: 'M-001', name: 'Dimas Kurniawan', title: 'Manager Teknologi', level: 'Manager', department: 'Teknologi', accountabilities: ['Delivery engineering', 'Technical backlog'] },
+  { id: 'M-002', name: 'Andi Pratama', title: 'Manager Implementasi', level: 'Manager', department: 'Implementasi', accountabilities: ['Project delivery', 'Go-live readiness'] },
+  { id: 'M-003', name: 'Maya Lestari', title: 'Manager Support', level: 'Manager', department: 'Support', accountabilities: ['SLA support', 'Incident response'] },
+  { id: 'M-004', name: 'Sarah Lee', title: 'Manager Sales', level: 'Manager', department: 'Sales', accountabilities: ['Pipeline', 'Customer expansion'] },
+  { id: 'M-005', name: 'Ratna Dewi', title: 'Manager Administrasi', level: 'Manager', department: 'Administrasi', accountabilities: ['Contracts', 'People operations'] }
+];
+
 export const employees = [
-  { id: 'EMP-ANDI', name: 'Andi Pratama', initials: 'AP', department: 'Implementation', skills: ['Implementation', 'Security'], experienceYears: 5, availability: 'Available', capacityHours: 40, allocatedHours: 28 },
-  { id: 'EMP-MAYA', name: 'Maya Lestari', initials: 'ML', department: 'Support', skills: ['Support', 'Incident Management'], experienceYears: 6, availability: 'Available', capacityHours: 40, allocatedHours: 36 },
-  { id: 'EMP-RIAN', name: 'Rian Pratama', initials: 'RP', department: 'Operations', skills: ['Data Operations', 'Reporting'], experienceYears: 3, availability: 'Available', capacityHours: 40, allocatedHours: 18 },
-  { id: 'EMP-SITI', name: 'Siti Aisyah', initials: 'SA', department: 'Support', skills: ['Support', 'Configuration'], experienceYears: 2, availability: 'Limited', capacityHours: 32, allocatedHours: 14 }
+  { id: 'EMP-TECH-01', name: 'Fajar Ramadhan', initials: 'FT', department: 'Teknologi', skills: ['Engineering', 'Architecture'], experienceYears: 4, availability: 'Available', capacityHours: 40, allocatedHours: 30 },
+  { id: 'EMP-TECH-02', name: 'Niko Pratama', initials: 'NP', department: 'Teknologi', skills: ['Engineering', 'Security'], experienceYears: 3, availability: 'Available', capacityHours: 40, allocatedHours: 34 },
+  { id: 'EMP-IMPL-01', name: 'Citra Wulandari', initials: 'CW', department: 'Implementasi', skills: ['Implementation', 'Training'], experienceYears: 4, availability: 'Available', capacityHours: 40, allocatedHours: 28 },
+  { id: 'EMP-IMPL-02', name: 'Galang Permana', initials: 'GP', department: 'Implementasi', skills: ['Implementation', 'Configuration'], experienceYears: 2, availability: 'Limited', capacityHours: 40, allocatedHours: 36 },
+  { id: 'EMP-SUP-01', name: 'Siti Aisyah', initials: 'SA', department: 'Support', skills: ['Support', 'Configuration'], experienceYears: 2, availability: 'Available', capacityHours: 32, allocatedHours: 14 },
+  { id: 'EMP-SUP-02', name: 'Joko Saputra', initials: 'JS', department: 'Support', skills: ['Support', 'Incident Management'], experienceYears: 3, availability: 'Available', capacityHours: 40, allocatedHours: 36 },
+  { id: 'EMP-SALES-01', name: 'Rian Pratama', initials: 'RP', department: 'Sales', skills: ['Sales', 'Discovery'], experienceYears: 3, availability: 'Available', capacityHours: 40, allocatedHours: 26 },
+  { id: 'EMP-SALES-02', name: 'Dewi Anggraini', initials: 'DA', department: 'Sales', skills: ['Sales', 'Account Management'], experienceYears: 4, availability: 'Available', capacityHours: 40, allocatedHours: 32 },
+  { id: 'EMP-ADMIN-01', name: 'Lina Kartika', initials: 'LK', department: 'Administrasi', skills: ['Contracts', 'Scheduling'], experienceYears: 3, availability: 'Available', capacityHours: 40, allocatedHours: 24 },
+  { id: 'EMP-ADMIN-02', name: 'Rafi Maulana', initials: 'RM', department: 'Administrasi', skills: ['Administration', 'Vendor Management'], experienceYears: 2, availability: 'Available', capacityHours: 40, allocatedHours: 20 }
 ];
 
 export const knowledgeItems = [

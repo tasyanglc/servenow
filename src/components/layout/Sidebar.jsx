@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 export const SIDEBAR_STRUCTURE = [
   { type: "header", name: "GLOBAL" },
+  { name: "My Role Workspace", path: "/role-dashboard", icon: "🧭" },
   { name: "Executive Overview", path: "/overview", icon: "📊" },
   { name: "Organization", path: "/organization", icon: "🏢" },
   

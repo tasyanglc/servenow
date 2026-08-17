@@ -49,7 +49,7 @@ export default function SalesPage() {
 
   const handleEditClick = (deal) => {
     // RBAC check: Sales Executive can only edit their own deals
-    const isSalesExecutive = userConfig.role === 'Sales Executive';
+    const isSalesExecutive = userConfig.division === 'Sales' && userConfig.level === 'Employee';
     const isOwner = deal.owner === userConfig.name;
     
     if (isSalesExecutive && !isOwner) {

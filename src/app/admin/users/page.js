@@ -2,15 +2,15 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../../components/DashboardLayout';
 import PageHeader from '../../../components/ui/PageHeader';
+import { employees, leadership } from '../../../lib/operationalData';
+
+const initialUsers = [
+  ...leadership.map(person => ({ id: person.id, name: person.name, email: `${person.name.toLowerCase().replaceAll(' ', '.')}@servenow.io`, role: person.level, department: person.department, status: 'Active', manager: person.level === 'C-Level' ? 'Board' : leadership.find(leader => leader.level === 'C-Level' && (leader.department === 'Operasional' || leader.department === 'Teknologi'))?.name })),
+  ...employees.map(person => ({ id: person.id, name: person.name, email: `${person.name.toLowerCase().replaceAll(' ', '.')}@servenow.io`, role: 'Employee', department: person.department, status: 'Active', manager: leadership.find(leader => leader.level === 'Manager' && leader.department === person.department)?.name }))
+];
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([
-    { id: 1, name: "Andi Pratama", email: "andi@servenow.io", role: "Manager", department: "Implementation", status: "Active", manager: "Director" },
-    { id: 2, name: "Budi Santoso", email: "budi@servenow.io", role: "Manager", department: "Support", status: "Active", manager: "Director" },
-    { id: 3, name: "Rian Pratama", email: "rian@servenow.io", role: "Employee", department: "Support", status: "Active", manager: "Budi Santoso" },
-    { id: 4, name: "Sarah Lee", email: "sarah@servenow.io", role: "Sales", department: "Sales", status: "Active", manager: "Director" },
-    { id: 5, name: "System Admin", email: "admin@servenow.io", role: "Admin", department: "IT Ops", status: "Active", manager: "None" }
-  ]);
+  const [users, setUsers] = useState(initialUsers);
 
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Employee', department: 'Support', manager: '' });
   const [showAddForm, setShowAddForm] = useState(false);
@@ -88,11 +88,9 @@ export default function AdminUsersPage() {
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                   className="w-full text-xs p-2 rounded border border-slate-250 bg-white"
                 >
-                  <option value="Director">Director</option>
+                  <option value="C-Level">C-Level</option>
                   <option value="Manager">Manager</option>
                   <option value="Employee">Employee</option>
-                  <option value="Sales">Sales Executive</option>
-                  <option value="Admin">Admin</option>
                 </select>
               </div>
               <div>
@@ -104,9 +102,9 @@ export default function AdminUsersPage() {
                 >
                   <option value="Support">Support</option>
                   <option value="Implementation">Implementation</option>
-                  <option value="Data Ops">Data Ops</option>
+                  <option value="Teknologi">Teknologi</option>
+                  <option value="Administrasi">Administrasi</option>
                   <option value="Sales">Sales</option>
-                  <option value="IT Ops">IT Ops</option>
                 </select>
               </div>
               <div>
