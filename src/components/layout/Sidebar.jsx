@@ -59,7 +59,10 @@ export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPat
           const isAllowed = allowedPaths.some(p => item.path === p);
           if (!isAllowed) return null;
 
-          const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
+          const isActive = currentPath === item.path || 
+            (item.path === '/sales' 
+              ? currentPath.startsWith('/sales/deals/') 
+              : currentPath.startsWith(item.path + '/'));
           return (
             <Link
               href={item.path}
