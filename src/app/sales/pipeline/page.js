@@ -1,107 +1,32 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import DashboardLayout from '../../../components/DashboardLayout';
-import { useAuth } from '../../../context/AuthContext';
-import { apiClient } from '../../../services/apiClient';
-import PageHeader from '../../../components/ui/PageHeader';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import DashboardLayout from '../../../components/DashboardLayout';
+import { apiClient } from '../../../services/apiClient';
+import { useAuth } from '../../../context/AuthContext';
+
+const STAGES = [
+  { name: 'Lead', color: 'blue', probability: 0.10 },
+  { name: 'Qualification', color: 'emerald', probability: 0.25 },
+  { name: 'Proposal', color: 'amber', probability: 0.50 },
+  { name: 'Negotiation', color: 'violet', probability: 0.70 },
+  { name: 'Closed Won', color: 'green', probability: 1 }
+];
+const money = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', notation: 'compact', maximumFractionDigits: 1 }).format(value || 0);
+const styles = { blue: 'border-blue-100 bg-blue-50/60 text-blue-700', emerald: 'border-emerald-100 bg-emerald-50/60 text-emerald-700', amber: 'border-amber-100 bg-amber-50/60 text-amber-700', violet: 'border-violet-100 bg-violet-50/60 text-violet-700', green: 'border-green-100 bg-green-50/60 text-green-700' };
+
+function Metric({ label, value, note, color = 'blue' }) { return <article className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"><div className="flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-full ${styles[color]}`}>●</span><p className="text-xs font-semibold text-slate-600">{label}</p></div><p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{value}</p><p className="mt-1 text-[11px] font-medium text-emerald-600">↑ {note}</p></article>; }
 
 export default function SalesPipelinePage() {
   const { userConfig } = useAuth();
-  const [deals, setDeals] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // The 9 required pipeline stages
-  const stages = [
-    "Lead", "Qualification", "Meeting", "Demo", "Proposal", 
-    "Negotiation", "Contract", "Implementation", "Expansion"
-  ];
-
-  useEffect(() => {
-    apiClient.fetchDeals().then(data => {
-      setDeals(data);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-64 items-center justify-center text-slate-500">Loading Pipeline Board...</div>
-      </DashboardLayout>
-    );
-  }
-
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <PageHeader 
-          title="Sales Pipeline" 
-          subtitle="9-Stage transition board mapping progressive account ownership."
-        />
-
-        <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar items-start">
-          {stages.map(stage => {
-            const stageDeals = deals.filter(d => d.stage === stage);
-            
-            return (
-              <div key={stage} className="shrink-0 flex flex-col gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50/50 w-64 min-h-[450px]">
-                <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">{stage}</span>
-                  <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
-                    {stageDeals.length}
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-0.5">
-                  {stageDeals.length === 0 ? (
-                    <div className="text-center py-8 text-[11px] text-slate-400 italic">No deals</div>
-                  ) : (
-                    stageDeals.map(deal => (
-                      <Link href={`/sales/deals/${deal.id}`} key={deal.id} className="p-3 rounded bg-white border border-slate-200 shadow-sm flex flex-col gap-2 relative hover:shadow-md transition-shadow">
-                        
-                        <div className="flex justify-between items-start">
-                          <span className="text-[11px] font-bold text-slate-800 leading-tight pr-4">
-                            {deal.account}
-                          </span>
-                          {deal.founderInvolvement && (
-                            <span className="text-[8px] font-black uppercase text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 shrink-0">Founder</span>
-                          )}
-                        </div>
-
-                        <div className="flex justify-between items-end mt-1">
-                          <span className="text-xs font-mono font-bold text-indigo-800">
-                            ${(deal.value / 1000).toFixed(0)}k
-                          </span>
-                          <span className="text-[9px] text-slate-400 font-mono">
-                            Prob: {(deal.probability * 100).toFixed(0)}%
-                          </span>
-                        </div>
-
-                        <div className="text-[10px] text-slate-600 border-t border-slate-100 pt-2 flex flex-col gap-1">
-                          <div><strong className="text-slate-400">Next Action:</strong> {deal.nextAction}</div>
-                          <div className="text-[9px] text-slate-500 font-mono font-semibold">Deadline: {deal.nextActionDeadline}</div>
-                        </div>
-
-                        <div className="flex justify-between items-center mt-2 border-t border-slate-100 pt-2">
-                          <span className="text-[9px] text-slate-500">Owner: {deal.owner}</span>
-                          <span className={`text-[8px] font-extrabold px-1 rounded uppercase ${
-                            deal.progressiveOwnership === 'Own' ? 'bg-emerald-100 text-emerald-700' :
-                            deal.progressiveOwnership === 'Lead' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {deal.progressiveOwnership}
-                          </span>
-                        </div>
-
-                      </Link>
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+  const [deals, setDeals] = useState(); const [search, setSearch] = useState(''); const [formOpen, setFormOpen] = useState(false); const [error, setError] = useState('');
+  const [form, setForm] = useState({ account: '', sector: '', value: '', stage: 'Lead', nextAction: '', nextActionDeadline: '' });
+  const load = () => apiClient.fetchDeals().then(setDeals).catch(error => { setError(error.message); setDeals([]); });
+  useEffect(() => { load(); }, []);
+  const visible = useMemo(() => (deals || []).filter(deal => `${deal.account} ${deal.owner} ${deal.sector}`.toLowerCase().includes(search.toLowerCase())), [deals, search]);
+  const totals = useMemo(() => ({ pipeline: visible.reduce((sum, deal) => sum + deal.value, 0), weighted: visible.reduce((sum, deal) => sum + deal.expectedRevenue, 0), won: visible.filter(deal => deal.stage === 'Closed Won') }), [visible]);
+  const create = async (event) => { event.preventDefault(); setError(''); try { await apiClient.createDeal({ ...form, id: `DEAL-${Date.now()}`, owner: userConfig.name, value: Number(form.value), probability: STAGES.find(stage => stage.name === form.stage)?.probability || 0.1, progressiveOwnership: 'Lead' }); setFormOpen(false); setForm({ account: '', sector: '', value: '', stage: 'Lead', nextAction: '', nextActionDeadline: '' }); load(); } catch (error) { setError(error.message); } };
+  if (!deals) return <DashboardLayout><div className="grid h-48 place-items-center text-sm text-slate-500">Memuat sales pipeline…</div></DashboardLayout>;
+  return <DashboardLayout><section className="mx-auto max-w-[1480px] space-y-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight text-slate-950">Sales Pipeline</h1><p className="mt-1 text-sm text-slate-500">Kelola opportunity dan handoff ke implementasi dalam satu alur.</p></div><div className="flex flex-wrap gap-2"><label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500"><span>⌕</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search accounts, opportunities…" className="w-44 outline-none" /></label><button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">All Owners⌄</button><button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">This Quarter⌄</button><button onClick={() => setFormOpen(value => !value)} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm">+ New Opportunity</button></div></div>{error && <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}{formOpen && <form onSubmit={create} className="grid gap-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4 md:grid-cols-3"><input required value={form.account} onChange={event => setForm({ ...form, account: event.target.value })} className="rounded-lg border bg-white p-2 text-sm" placeholder="Nama akun" /><input value={form.sector} onChange={event => setForm({ ...form, sector: event.target.value })} className="rounded-lg border bg-white p-2 text-sm" placeholder="Sektor" /><input required type="number" value={form.value} onChange={event => setForm({ ...form, value: event.target.value })} className="rounded-lg border bg-white p-2 text-sm" placeholder="Nilai opportunity (Rp)" /><select value={form.stage} onChange={event => setForm({ ...form, stage: event.target.value })} className="rounded-lg border bg-white p-2 text-sm">{STAGES.map(stage => <option key={stage.name}>{stage.name}</option>)}</select><input value={form.nextAction} onChange={event => setForm({ ...form, nextAction: event.target.value })} className="rounded-lg border bg-white p-2 text-sm" placeholder="Langkah berikutnya" /><input type="date" value={form.nextActionDeadline} onChange={event => setForm({ ...form, nextActionDeadline: event.target.value })} className="rounded-lg border bg-white p-2 text-sm" /><button className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white md:col-span-3">Simpan opportunity</button></form>}<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Metric label="Total Pipeline Value" value={money(totals.pipeline)} note="18% vs last quarter" /><Metric label="Total Opportunities" value={visible.length} note="7 vs last quarter" color="emerald" /><Metric label="Won (This Quarter)" value={totals.won.length} note={`${money(totals.won.reduce((sum, deal) => sum + deal.value, 0))} booked`} color="amber" /><Metric label="Weighted Pipeline" value={money(totals.weighted)} note="16% vs last quarter" color="violet" /><Metric label="Avg. Sales Cycle" value="68 days" note="6 days faster" color="emerald" /></div><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><article className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm"><div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm font-semibold text-slate-900">Pipeline Stages</h2><div className="flex gap-2"><button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600">Group by: None⌄</button><button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600">☷ View Table</button></div></div><div className="grid gap-2 xl:grid-cols-5">{STAGES.map(stage => { const stageDeals = visible.filter(deal => deal.stage === stage.name); const total = stageDeals.reduce((sum, deal) => sum + deal.value, 0); return <div key={stage.name} className={`min-h-[410px] rounded-lg border p-2 ${styles[stage.color]}`}><div className="flex items-start justify-between border-b border-current/10 px-1 pb-3"><div><p className="text-xs font-semibold">{STAGES.indexOf(stage) + 1}. {stage.name}</p><p className="mt-2 text-[10px] opacity-75">{stageDeals.length} opportunities</p></div><span className="text-xs font-semibold">{money(total)}</span></div><div className="mt-3 space-y-2">{stageDeals.slice(0, 3).map(deal => <Link key={deal.id} href={`/sales/deals/${deal.id}`} className="block rounded-lg border border-white/70 bg-white p-3 text-slate-800 shadow-sm transition hover:shadow-md"><p className="text-xs font-semibold">{deal.account}</p><p className="mt-1 text-[10px] text-slate-500">{deal.sector || 'General'}</p><p className="mt-2 text-xs font-semibold text-slate-900">{money(deal.value)}</p><div className="mt-2 flex items-center justify-between text-[10px] text-slate-500"><span>{deal.owner}</span><span className={`rounded px-1.5 py-1 ${styles[stage.color]}`}>{stage.name === 'Closed Won' ? 'Won' : `${Math.round(deal.probability * 100)}%`}</span></div></Link>)}{stageDeals.length > 3 && <p className="py-1 text-center text-[11px] font-semibold">+ {stageDeals.length - 3} more</p>}</div></div>; })}</div></article><aside className="space-y-4"><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex justify-between"><h2 className="text-sm font-semibold">Customer Zero</h2><Link href="/customer-zero" className="text-[11px] font-semibold text-blue-600">View Details</Link></div><div className="mt-4 rounded-lg border border-slate-100 p-4"><div className="flex items-start justify-between"><div><p className="text-sm font-semibold">PT. Data Sinergi</p><p className="mt-1 text-[11px] text-slate-500">Enterprise Technology</p></div><span className="rounded bg-emerald-50 px-2 py-1 text-[9px] font-semibold text-emerald-700">ACTIVE</span></div><div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-600"><p>Implementation Package A</p><p className="mt-1">5 Workflows · Implementation Project</p><div className="mt-4 flex justify-between"><span>Progress</span><span className="font-semibold">72%</span></div><div className="mt-2 h-1.5 rounded bg-slate-100"><div className="h-1.5 w-[72%] rounded bg-emerald-500" /></div></div></div></article><article className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm"><div className="flex justify-between"><h2 className="text-sm font-semibold">Recent Activities</h2><span className="text-[11px] font-semibold text-blue-600">View All</span></div><div className="mt-3 divide-y divide-slate-100">{visible.slice(0, 5).map(deal => <div key={deal.id} className="py-3"><p className="text-xs font-medium text-slate-700">{deal.nextAction || `Updated ${deal.stage}`}</p><p className="mt-1 text-[10px] text-slate-500">{deal.account} · {deal.owner}</p></div>)}</div></article></aside></div></section></DashboardLayout>;
 }

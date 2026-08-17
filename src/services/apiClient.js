@@ -436,40 +436,30 @@ export const apiClient = {
    * Fetch active deals for sales pipeline
    */
   fetchDeals: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([...mockDeals]);
-      }, 300);
-    });
+    const response = await fetch('/api/deals');
+    if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || 'Opportunity tidak dapat dimuat.'); }
+    return response.json();
   },
 
   /**
    * Update deal stage, next action, etc.
    */
   updateDeal: async (dealId, updates) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const dealIndex = mockDeals.findIndex(d => d.id === dealId);
-        if (dealIndex === -1) {
-          return reject(new Error("Deal not found"));
-        }
-        mockDeals[dealIndex] = {
-          ...mockDeals[dealIndex],
-          ...updates
-        };
-        resolve(mockDeals[dealIndex]);
-      }, 300);
-    });
+    const response = await fetch(`/api/deals/${dealId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+    if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || 'Opportunity tidak dapat diperbarui.'); }
+    return response.json();
   },
 
   getDealById: async (dealId) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const deal = mockDeals.find(item => item.id === dealId);
-        if (deal) resolve({ ...deal });
-        else reject(new Error("Deal not found"));
-      }, 200);
-    });
+    const response = await fetch(`/api/deals/${dealId}`);
+    if (!response.ok) throw new Error('Opportunity tidak ditemukan.');
+    return response.json();
+  },
+
+  createDeal: async (deal) => {
+    const response = await fetch('/api/deals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(deal) });
+    if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || 'Opportunity tidak dapat dibuat.'); }
+    return response.json();
   },
 
   /**
