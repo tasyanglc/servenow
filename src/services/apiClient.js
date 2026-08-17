@@ -202,12 +202,56 @@ export const apiClient = {
 
         escalations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         
+        // Calculate workload imbalances (owners with more than 1 task)
+        const workloadImbalances = Object.values(workload).filter(w => w.count > 1).length;
+
+        // Determine dominant root cause from exceptions
+        const causeCounts = {};
+        exceptions.forEach(task => {
+          let cause = "Queue Backlog";
+          if (task.isBlocked) {
+            cause = "Dependency Delay";
+          } else if (task.owner && workload[task.owner.name]?.count > 1) {
+            cause = "Workload Pressure";
+          } else if (task.estimated_task_hours > 20) {
+            cause = "Task Complexity";
+          }
+          causeCounts[cause] = (causeCounts[cause] || 0) + 1;
+        });
+
+        let dominantRootCause = "Dependency Delay"; // Default fallback
+        let maxCauseCount = 0;
+        Object.entries(causeCounts).forEach(([cause, count]) => {
+          if (count > maxCauseCount) {
+            maxCauseCount = count;
+            dominantRootCause = cause;
+          }
+        });
+
+        // Recommended Management Focus based on dominant cause
+        const focusMap = {
+          "Dependency Delay": "Review cross-department dependencies and expedite blocking items.",
+          "Workload Pressure": "Rebalance active task assignments to offload overloaded team members.",
+          "Task Complexity": "Conduct technical reviews and assign senior co-owners to complex tasks.",
+          "Queue Backlog": "Prioritize inbox zero and expedite task triage routines."
+        };
+        const recommendedFocus = focusMap[dominantRootCause] || "Conduct operational review.";
+
         resolve({
           kpis: {
             slaAchievement: Math.round((completedSla / totalSlaMeasured) * 100) || 100,
             overdue: overdueCount,
             atRisk: atRiskCount,
-            blocked: blockedCount
+            blocked: blockedCount,
+            workloadImbalances
+          },
+          weeklySummary: {
+            overdue: overdueCount,
+            atRisk: atRiskCount,
+            blocked: blockedCount,
+            workloadImbalances,
+            dominantRootCause,
+            recommendedFocus
           },
           exceptions: exceptions.sort((a, b) => a.remaining_sla_hours - b.remaining_sla_hours),
           workload: Object.values(workload).sort((a, b) => a.name.localeCompare(b.name)),

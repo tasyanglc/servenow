@@ -30,7 +30,7 @@ export default function TeamDashboardPage() {
         subtitle="Manage by Exception: Focus on what needs your attention right now."
       />
 
-      <AiWeeklySummary />
+      <AiWeeklySummary weeklySummary={data.weeklySummary} />
 
       {/* KPI Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
