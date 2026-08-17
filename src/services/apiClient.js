@@ -259,5 +259,91 @@ export const apiClient = {
         });
       }, 400);
     });
+  },
+
+  /**
+   * Fetch company-wide aggregate metrics for the Director's Executive Overview
+   */
+  getExecutiveOverviewData: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        let overdueCount = 0;
+        let atRiskCount = 0;
+        let blockedCount = 0;
+        let totalOpen = 0;
+        let directorInvolvedCount = 0;
+        
+        const criticalExceptions = [];
+        const departments = {
+          "Support": { total: 0, onTrack: 0 },
+          "Implementation": { total: 0, onTrack: 0 },
+          "Data Ops": { total: 0, onTrack: 0 }
+        };
+
+        mockTasks.forEach(task => {
+          const status = calculateTaskStatus(task.remaining_sla_hours, task.sla_hours);
+          const isBlocked = task.dependencies && task.dependencies.some(d => d.status !== 'Resolved');
+          
+          if (status === 'OVERDUE') overdueCount++;
+          if (status === 'AT RISK') atRiskCount++;
+          if (isBlocked) blockedCount++;
+          totalOpen++;
+
+          // Check if Director is involved (either task owner is Director or it has an escalation involving Director)
+          const hasDirectorEscalation = task.escalation_history && task.escalation_history.some(e => e.action.includes("Director") || e.user === "Director");
+          if (task.owner?.name === "Director" || hasDirectorEscalation) {
+            directorInvolvedCount++;
+          }
+
+          // Department metrics
+          const dept = task.department;
+          if (departments[dept]) {
+            departments[dept].total++;
+            if (status === 'ON TRACK' || task.status === 'Resolved') {
+              departments[dept].onTrack++;
+            }
+          }
+
+          // Critical operational exceptions
+          if (task.task_priority === "Critical" && (status === 'OVERDUE' || status === 'AT RISK' || isBlocked)) {
+            criticalExceptions.push({
+              id: task.id,
+              title: task.title,
+              customer: task.customer,
+              status,
+              owner: task.owner?.name || "Unassigned"
+            });
+          }
+        });
+
+        const deptSummary = Object.entries(departments).map(([name, stats]) => ({
+          name,
+          slaAchievement: stats.total > 0 ? Math.round((stats.onTrack / stats.total) * 100) : 100,
+          openTasks: stats.total
+        }));
+
+        const totalEscalated = overdueCount + atRiskCount;
+        const directorDependencyRate = totalOpen > 0 ? Math.round((directorInvolvedCount / totalOpen) * 100) : 0;
+
+        resolve({
+          slaAchievement: 88, // Overall SLA target
+          weeklyExceptions: overdueCount + atRiskCount,
+          pipelineValue: "$1,240,000",
+          directorDependency: `${directorDependencyRate}%`,
+          deptSummary,
+          criticalExceptions: criticalExceptions.slice(0, 5),
+          salesSummary: [
+            { id: "deal-1", customer: "Acme Corp", value: "$500,000", probability: "90%", stage: "Proposal" },
+            { id: "deal-2", customer: "Delta Co", value: "$340,000", probability: "70%", stage: "Negotiation" },
+            { id: "deal-3", customer: "Omega Inc", value: "$400,000", probability: "50%", stage: "Discovery" }
+          ],
+          customerZero: {
+            activeUsers: 48,
+            nps: 9,
+            healthScore: "92%"
+          }
+        });
+      }, 400);
+    });
   }
 };
