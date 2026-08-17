@@ -3,8 +3,19 @@ import { customers, decisionMatrixRules, employees, escalationRules, knowledgeIt
 import { calculateTaskStatus } from '../lib/taskUtils';
 
 const delay = (value) => new Promise(resolve => setTimeout(() => resolve(value), 120));
-const persist = (path, payload) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
-const fetchPersistedProjects = () => fetch('/api/projects').then(response => response.ok ? response.json() : []).catch(() => []);
+const persist = async (path, payload) => {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || 'Database tidak dapat menyimpan perubahan.');
+  }
+  return response.json();
+};
+const fetchPersistedProjects = async () => {
+  const response = await fetch('/api/projects');
+  if (!response.ok) throw new Error('Database tidak dapat memuat daftar proyek.');
+  return response.json();
+};
 const taskById = (id) => mockTasks.find(task => task.id === id);
 const customerByName = (name) => customers.find(customer => customer.name === name);
 const workload = (employee) => Math.round((employee.allocatedHours / employee.capacityHours) * 100);
@@ -53,7 +64,17 @@ export const operationsService = {
     });
     const project = { id: projectId, name: name || `${customer.name} ${servicePackage.name}`, customerId, packageId, workflowIds: servicePackage.workflowIds, taskIds: projectTasks, scope: scope || servicePackage.description, milestones, slaId: customer.slaIds[0], status: 'In progress', outcomeId: null, learningIds: knowledgeItems.filter(item => servicePackage.workflowIds.includes(item.workflowId)).map(item => item.id) };
     projects.push(project);
-    return persist('/api/projects', { ...project, generatedTasks: projectTasks.map(taskById).filter(Boolean) }).then(() => delay(projectView(project)));
+    return persist('/api/projects', { ...project, generatedTasks: projectTasks.map(taskById).filter(Boolean) })
+      .then(() => delay(projectView(project)))
+      .catch(error => {
+        const projectIndex = projects.findIndex(item => item.id === project.id);
+        if (projectIndex >= 0) projects.splice(projectIndex, 1);
+        projectTasks.forEach(taskId => {
+          const taskIndex = mockTasks.findIndex(task => task.id === taskId);
+          if (taskIndex >= 0) mockTasks.splice(taskIndex, 1);
+        });
+        throw error;
+      });
   },
   listWorkflows: () => delay(workflowTemplates.map(workflow => ({ ...workflow, packages: servicePackages.filter(pkg => pkg.workflowIds.includes(workflow.id)), playbooks: knowledgeItems.filter(item => workflow.linkedPlaybookIds.includes(item.playbookId)) }))),
   listKnowledge: () => delay(knowledgeItems.map(item => ({ ...item, sourceProject: projects.find(project => project.id === item.sourceProjectId) }))),
