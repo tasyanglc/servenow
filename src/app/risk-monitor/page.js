@@ -14,7 +14,8 @@ export default function RiskMonitorPage() {
   const [confirmedTask, setConfirmedTask] = useState(null);
 
   const confirmRecommendation = async (task, prediction) => {
-    await operationsService.confirmIntervention({ taskId: task.id, action: prediction?.recommended_action || 'Review / Coach', reason: 'Manager confirmed recommendation from Risk Monitor.' });
+    const decision = operationsService.decide({ riskBand: prediction?.risk_band, slaState: task.remaining_sla_hours < 0 ? 'OVERDUE' : task.remaining_sla_hours / task.sla_hours <= .25 ? 'AT RISK' : 'ON TRACK', dependencyDelayed: task.dependencies?.some(item => item.status === 'Delayed'), workloadRatio: task.peak_workload_flag ? 90 : 60, priority: task.task_priority, complexity: task.task_complexity });
+    await operationsService.confirmIntervention({ taskId: task.id, action: decision.action, reason: `${decision.reason} ${decision.escalation ? `Escalation route: ${decision.escalation.recipient}.` : ''}` });
     setConfirmedTask(task.id);
   };
 
@@ -66,7 +67,7 @@ export default function RiskMonitorPage() {
       <div className="flex justify-between items-end mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-800">AI Risk Monitor</h1>
-          <p className="text-sm text-slate-500">Real-time XGBoost predictions based on SHAP local interpretability.</p>
+          <p className="text-sm text-slate-500">Model signals are combined with SLA, dependency and capacity policy before a manager confirms an action.</p>
         </div>
         <div className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 text-xs font-semibold shadow-sm flex items-center gap-2">
            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
@@ -142,9 +143,7 @@ export default function RiskMonitorPage() {
                         </svg>
                         Recommended Action
                       </span>
-                      <p className="text-xs font-bold text-indigo-900 leading-tight">
-                        {pred?.recommended_action || "Manual Review Required"}
-                      </p>
+                      <p className="text-xs font-bold text-indigo-900 leading-tight">{operationsService.decide({ riskBand: pred?.risk_band, slaState: task.remaining_sla_hours < 0 ? 'OVERDUE' : task.remaining_sla_hours / task.sla_hours <= .25 ? 'AT RISK' : 'ON TRACK', dependencyDelayed: task.dependencies?.some(item => item.status === 'Delayed'), workloadRatio: task.peak_workload_flag ? 90 : 60, priority: task.task_priority, complexity: task.task_complexity }).action}</p>
                     </div>
                     {/* PRD constraint: Manager must confirm action */}
                     <button onClick={() => confirmRecommendation(task, pred)} disabled={confirmedTask === task.id} className="w-full mt-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded shadow-sm transition-colors disabled:opacity-60">

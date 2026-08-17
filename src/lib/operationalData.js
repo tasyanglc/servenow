@@ -3,6 +3,8 @@ export const workflowTemplates = [
   { id: 'WF-ONBOARD', name: 'Customer Onboarding', description: 'Standard implementation journey from discovery to go-live.', standardSlaHours: 120, requiredSkills: ['Implementation', 'Security'], expectedOutputs: ['Live workspace', 'Acceptance sign-off'], linkedPlaybookIds: ['PB-ONBOARD'], stages: [{ id: 'STG-DISC', name: 'Discovery', gate: 'Scope approved', slaHours: 16 }, { id: 'STG-SETUP', name: 'Setup', gate: 'Security cleared', slaHours: 32 }, { id: 'STG-GO', name: 'Go-live', gate: 'Customer acceptance', slaHours: 72 }] },
   { id: 'WF-INCIDENT', name: 'Critical Incident Resolution', description: 'Cross-functional response for customer-impacting incidents.', standardSlaHours: 24, requiredSkills: ['Support', 'Engineering'], expectedOutputs: ['Resolution', 'Customer update'], linkedPlaybookIds: ['PB-INCIDENT'], stages: [{ id: 'STG-TRIAGE', name: 'Triage', gate: 'Severity confirmed', slaHours: 2 }, { id: 'STG-RCA', name: 'Root Cause', gate: 'Fix approved', slaHours: 8 }, { id: 'STG-RESOLVE', name: 'Resolution', gate: 'Customer confirmed', slaHours: 14 }] },
   { id: 'WF-REPORT', name: 'Operational Reporting', description: 'Monthly operational report preparation and review.', standardSlaHours: 72, requiredSkills: ['Data Operations'], expectedOutputs: ['Reviewed report'], linkedPlaybookIds: ['PB-REPORT'], stages: [{ id: 'STG-PREP', name: 'Prepare', gate: 'Data quality checked', slaHours: 40 }, { id: 'STG-REVIEW', name: 'Review', gate: 'Published', slaHours: 32 }] }
+  ,{ id: 'WF-RENEWAL', name: 'Customer Renewal & Expansion', description: 'Standard commercial and operational handover for renewals and expansion.', standardSlaHours: 96, requiredSkills: ['Sales', 'Contracts'], expectedOutputs: ['Renewal decision', 'Signed order'], linkedPlaybookIds: ['PB-RENEWAL'], stages: [{ id: 'STG-HEALTH', name: 'Account health review', gate: 'Renewal risk agreed', slaHours: 24 }, { id: 'STG-OFFER', name: 'Offer & negotiation', gate: 'Commercial approval', slaHours: 40 }, { id: 'STG-CONTRACT', name: 'Contract handover', gate: 'Contract signed', slaHours: 32 }] }
+  ,{ id: 'WF-CHANGE', name: 'Change Request Delivery', description: 'Scoped, approved and delivered customer change requests.', standardSlaHours: 80, requiredSkills: ['Implementation', 'Engineering'], expectedOutputs: ['Accepted change'], linkedPlaybookIds: ['PB-CHANGE'], stages: [{ id: 'STG-SCOPE', name: 'Scope request', gate: 'Scope approved', slaHours: 16 }, { id: 'STG-BUILD', name: 'Configure & build', gate: 'Quality reviewed', slaHours: 40 }, { id: 'STG-ACCEPT', name: 'Customer acceptance', gate: 'Change accepted', slaHours: 24 }] }
 ];
 
 export const servicePackages = [
@@ -13,7 +15,8 @@ export const servicePackages = [
 
 export const sectorBlueprints = [
   { id: 'BP-SAAS', sector: 'SaaS', packageId: 'PKG-ENTERPRISE', workflowIds: ['WF-ONBOARD', 'WF-INCIDENT'], slaDefaults: '120h onboarding / 24h critical incident', gates: ['Security cleared', 'Customer acceptance'], playbookIds: ['PB-ONBOARD', 'PB-INCIDENT'] },
-  { id: 'BP-TECH', sector: 'Technology', packageId: 'PKG-CARE', workflowIds: ['WF-INCIDENT'], slaDefaults: '24h critical incident', gates: ['Severity confirmed', 'Customer confirmed'], playbookIds: ['PB-INCIDENT'] }
+  { id: 'BP-TECH', sector: 'Technology', packageId: 'PKG-CARE', workflowIds: ['WF-INCIDENT'], slaDefaults: '24h critical incident', gates: ['Severity confirmed', 'Customer confirmed'], playbookIds: ['PB-INCIDENT'] },
+  { id: 'BP-PRO', sector: 'Professional Services', packageId: 'PKG-OPS', workflowIds: ['WF-REPORT', 'WF-RENEWAL'], slaDefaults: '72h reporting / 96h renewal', gates: ['Data quality checked', 'Commercial approval'], playbookIds: ['PB-REPORT', 'PB-RENEWAL'] }
 ];
 
 export const customers = [
@@ -56,8 +59,30 @@ export const knowledgeItems = [
   { id: 'KN-001', title: 'Security review handoff checklist', type: 'Playbook', description: 'Use a named owner and decision deadline before the security gate.', sourceProjectId: 'PRJ-ACME', tags: ['handoff', 'security'], sector: 'SaaS', workflowId: 'WF-ONBOARD', gate: 'Security cleared', playbookId: 'PB-ONBOARD', lesson: 'Explicit owner avoids setup delay.', status: 'Approved' },
   { id: 'KN-002', title: 'Critical incident customer communications', type: 'Playbook', description: 'Send cadence updates during critical incident response.', sourceProjectId: 'PRJ-DELTA', tags: ['incident', 'communication'], sector: 'Technology', workflowId: 'WF-INCIDENT', gate: 'Severity confirmed', playbookId: 'PB-INCIDENT', lesson: 'Customer updates reduce escalation pressure.', status: 'Approved' },
   { id: 'KN-003', title: 'API timeout dependency pattern', type: 'Lesson Learned', description: 'Cloud capacity delays can turn an API incident overdue.', sourceProjectId: 'PRJ-OMEGA', tags: ['dependency', 'capacity'], sector: 'Technology', workflowId: 'WF-INCIDENT', gate: 'Fix approved', playbookId: null, lesson: 'Escalate cloud dependencies at first delayed status.', status: 'Published' }
+  ,...Array.from({ length: 17 }, (_, index) => {
+    const number = index + 4;
+    const workflowId = ['WF-ONBOARD', 'WF-INCIDENT', 'WF-REPORT', 'WF-RENEWAL', 'WF-CHANGE'][index % 5];
+    const titles = ['Named gate owner', 'Dependency review cadence', 'Customer update template', 'Capacity handover', 'Acceptance evidence'];
+    return { id: `KN-${String(number).padStart(3, '0')}`, title: `${titles[index % 5]} pattern`, type: index % 3 === 0 ? 'Playbook' : 'Lesson Learned', description: 'Pattern extracted from a completed delivery review and approved for reuse at the relevant gate.', sourceProjectId: index % 2 ? 'PRJ-DELTA' : 'PRJ-ACME', tags: ['delivery-review', 'gate'], sector: index % 2 ? 'Technology' : 'SaaS', workflowId, gate: 'Gate review', playbookId: `PB-${workflowId.replace('WF-', '')}`, lesson: 'Use the documented owner, evidence and escalation threshold before moving to the next gate.', status: index % 3 === 0 ? 'Approved' : 'Published' };
+  })
 ];
 
 export const pilots = [{ id: 'PIL-001', customerId: 'CUS-ACME', workflowId: 'WF-ONBOARD', packageId: 'PKG-ENTERPRISE', status: 'Active', implementationProgress: 68, slaResult: 'Tracking', friction: 'Security handoff needs a named approver.', feedback: 'Customer wants a shared go-live checklist.', improvementOpportunity: 'Add security gate owner field.' }];
 export const outcomes = [{ id: 'OUT-OMEGA', customerId: 'CUS-OMEGA', projectId: 'PRJ-OMEGA', slaAchieved: false, deliveryCompleted: false, resolutionStatus: 'Resolved after breach', notes: 'API restored; post-incident review scheduled.', completionDate: '2026-08-15' }];
 export const decisionMatrixRules = [{ id: 'DM-OVERDUE', when: 'overdue', action: 'Immediate Intervention' }, { id: 'DM-DEP', when: 'high risk + delayed dependency', action: 'Escalate Dependency' }, { id: 'DM-CAP', when: 'high risk + overloaded owner', action: 'Reassign Resource' }, { id: 'DM-MON', when: 'medium risk + capacity', action: 'Monitor' }];
+
+// Mutable mock policy store. It deliberately mirrors the future API contract so these
+// controls can drive the operational loop today and be replaced by persistence later.
+export const slaRules = [
+  { id: 'SLA-1', type: 'Support', priority: 'Critical', defaultSla: 24, threshold: 25 },
+  { id: 'SLA-2', type: 'Support', priority: 'High', defaultSla: 48, threshold: 25 },
+  { id: 'SLA-3', type: 'Implementation', priority: 'Medium', defaultSla: 120, threshold: 25 },
+  { id: 'SLA-4', type: 'Data Ops', priority: 'High', defaultSla: 72, threshold: 25 },
+  { id: 'SLA-5', type: 'Configuration', priority: 'Low', defaultSla: 96, threshold: 25 }
+];
+
+export const escalationRules = [
+  { id: 'ESC-1', condition: 'SLA buffer <= threshold', threshold: '25% remaining', level: 'At Risk Notification', recipient: 'Department Manager', trigger: 'at-risk' },
+  { id: 'ESC-2', condition: 'SLA remaining time <= 0', threshold: '0 hours', level: 'Overdue Auto-Escalation', recipient: 'Operations Director', trigger: 'overdue' },
+  { id: 'ESC-3', condition: 'Dependency delayed', threshold: 'Any delayed predecessor', level: 'Blocker Alert Escalation', recipient: 'Preceding Owner Manager', trigger: 'dependency' }
+];

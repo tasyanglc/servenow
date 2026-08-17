@@ -1,27 +1,24 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/DashboardLayout';
 import PageHeader from '../../../components/ui/PageHeader';
+import { operationsService } from '../../../services/operationsService';
 
 export default function AdminSlaRulesPage() {
-  const [rules, setRules] = useState([
-    { id: 1, type: "Support", defaultSla: 24, priority: "Critical", threshold: "80%" },
-    { id: 2, type: "Support", defaultSla: 48, priority: "High", threshold: "85%" },
-    { id: 3, type: "Implementation", defaultSla: 120, priority: "Medium", threshold: "90%" },
-    { id: 4, type: "Data Ops", defaultSla: 72, priority: "High", threshold: "85%" },
-    { id: 5, type: "Configuration", defaultSla: 96, priority: "Low", threshold: "75%" }
-  ]);
+  const [rules, setRules] = useState([]);
 
   const [editingId, setEditingId] = useState(null);
   const [editVal, setEditVal] = useState(0);
+  useEffect(() => { operationsService.getSlaRules().then(setRules); }, []);
 
   const handleEdit = (id, curVal) => {
     setEditingId(id);
     setEditVal(curVal);
   };
 
-  const handleSave = (id) => {
-    setRules(rules.map(r => r.id === id ? { ...r, defaultSla: editVal } : r));
+  const handleSave = async (id) => {
+    await operationsService.updateSlaRule(id, { defaultSla: editVal });
+    setRules(await operationsService.getSlaRules());
     setEditingId(null);
   };
 
@@ -30,7 +27,7 @@ export default function AdminSlaRulesPage() {
       <div className="space-y-6 max-w-7xl">
         <PageHeader 
           title="SLA Rules Policy" 
-          subtitle="Define target resolution SLA limits (hours) mapped by task type and urgency parameters."
+          subtitle="These policies are used when a package creates operational tasks. Changes are retained for this demo session."
         />
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -68,7 +65,7 @@ export default function AdminSlaRulesPage() {
                       <span className="font-mono font-semibold text-slate-700">{r.defaultSla} hours</span>
                     )}
                   </td>
-                  <td className="p-4 font-mono font-medium text-slate-600">{r.threshold}</td>
+                  <td className="p-4 font-mono font-medium text-slate-600">{r.threshold}% remaining</td>
                   <td className="p-4 text-right">
                     {editingId === r.id ? (
                       <button 

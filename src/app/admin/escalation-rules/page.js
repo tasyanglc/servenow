@@ -1,24 +1,22 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/DashboardLayout';
 import PageHeader from '../../../components/ui/PageHeader';
+import { operationsService } from '../../../services/operationsService';
 
 export default function AdminEscalationRulesPage() {
-  const [rules, setRules] = useState([
-    { id: 1, condition: "SLA remaining time <= 25%", threshold: "25% remaining", level: "At Risk Notification", recipient: "Department Manager" },
-    { id: 2, condition: "SLA remaining time <= 0", threshold: "0 hours (Breach)", level: "Overdue Auto-Escalation", recipient: "Director & CEO" },
-    { id: 3, condition: "Dependency delay > 12 hours", threshold: "12 hours idle", level: "Blocker Alert Escalation", recipient: "Preceding Owner's Manager" },
-    { id: 4, condition: "Task reassigned > 2 times", threshold: "2 bounces", level: "Volatility Intervention", recipient: "Operations Director" }
-  ]);
+  const [rules, setRules] = useState([]);
 
   const [newRule, setNewRule] = useState({ condition: '', threshold: '', level: 'At Risk Notification', recipient: '' });
   const [showForm, setShowForm] = useState(false);
+  useEffect(() => { operationsService.getEscalationRules().then(setRules); }, []);
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!newRule.condition || !newRule.recipient) return;
 
-    setRules([...rules, { id: rules.length + 1, ...newRule }]);
+    await operationsService.saveEscalationRule(newRule);
+    setRules(await operationsService.getEscalationRules());
     setNewRule({ condition: '', threshold: '', level: 'At Risk Notification', recipient: '' });
     setShowForm(false);
   };
@@ -29,7 +27,7 @@ export default function AdminEscalationRulesPage() {
         <div className="flex justify-between items-center">
           <PageHeader 
             title="Escalation Protocols" 
-            subtitle="Configure automated alert policies, operational thresholds, and target alert recipients."
+            subtitle="These thresholds inform risk, dependency and overdue escalation decisions in this demo session."
           />
           <button 
             onClick={() => setShowForm(!showForm)}
