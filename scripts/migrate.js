@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
+const { loadEnvConfig } = require('@next/env');
+
+// `node scripts/migrate.js` runs outside Next.js, so explicitly load .env.local.
+loadEnvConfig(process.cwd());
 
 async function run() {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL belum ditemukan. Tambahkan ke .env.local lalu jalankan kembali.');
