@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import { mockTasks } from '../../lib/mockData';
 import TaskCard from '../../components/TaskCard';
 import { calculateTaskStatus } from '../../lib/taskUtils';
+import { apiClient } from '../../services/apiClient';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -21,8 +21,10 @@ function TaskCalendar({ tasks, cursor, selectedDate, onCursorChange, onSelectDat
 }
 
 export default function TaskBoardPage() {
-  const { activeRole } = useAuth(); const [cursor, setCursor] = useState(new Date(2025, 4, 1)); const [selectedDate, setSelectedDate] = useState(null);
-  const visibleTasks = useMemo(() => selectedDate ? mockTasks.filter(task => taskDate(task) === selectedDate) : mockTasks, [selectedDate]);
+  const { activeRole } = useAuth(); const [cursor, setCursor] = useState(new Date(2025, 4, 1)); const [selectedDate, setSelectedDate] = useState(null); const [tasks, setTasks] = useState();
+  useEffect(() => { apiClient.fetchTasks().then(setTasks).catch(() => setTasks([])); }, []);
+  const visibleTasks = useMemo(() => selectedDate ? (tasks || []).filter(task => taskDate(task) === selectedDate) : (tasks || []), [selectedDate, tasks]);
+  const mockTasks = tasks || [];
   const columns = [
     { title: 'ON TRACK', label: 'Sesuai rencana', tasks: visibleTasks.filter(task => calculateTaskStatus(task.remaining_sla_hours, task.sla_hours) === 'ON TRACK'), dot: 'bg-emerald-500', border: 'border-emerald-100', action: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' },
     { title: 'AT RISK', label: 'Perlu perhatian', tasks: visibleTasks.filter(task => calculateTaskStatus(task.remaining_sla_hours, task.sla_hours) === 'AT RISK'), dot: 'bg-amber-500', border: 'border-amber-100', action: 'border-amber-200 text-amber-700 hover:bg-amber-50' },

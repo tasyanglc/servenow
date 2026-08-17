@@ -1,4 +1,3 @@
-import { mockTasks, mockCustomerSlas } from '../lib/mockData';
 import { calculateTaskStatus } from '../lib/taskUtils';
 
 // In-Memory Sales Database
@@ -92,63 +91,41 @@ export const apiClient = {
    * Returns a promise to enforce asynchronous data flow architecture.
    */
   fetchTasks: async (filters = {}) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let tasks = [...mockTasks];
-        if (filters.ownerInitials) {
-          tasks = tasks.filter(t => t.owner?.initials === filters.ownerInitials);
-        }
-        if (filters.department) {
-          tasks = tasks.filter(t => t.department === filters.department);
-        }
-        resolve(tasks);
-      }, 500); // simulate network latency
-    });
+    const search = new URLSearchParams();
+    if (filters.ownerInitials) search.set('ownerInitials', filters.ownerInitials);
+    const response = await fetch(`/api/tasks${search.size ? `?${search}` : ''}`);
+    if (!response.ok) throw new Error('Tugas tidak dapat dimuat dari database.');
+    let tasks = await response.json();
+    if (filters.department) tasks = tasks.filter(task => task.department === filters.department);
+    return tasks;
   },
 
   /**
    * Fetch a single task by ID
    */
   getTaskById: async (id) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const task = mockTasks.find(t => t.id === id);
-        if (task) resolve(task);
-        else reject(new Error("Task not found"));
-      }, 300);
-    });
+    const response = await fetch(`/api/tasks/${id}`);
+    if (!response.ok) throw new Error('Task not found');
+    return response.json();
   },
 
   /**
    * Fetch a Customer SLA context, including full task details for its sequence
    */
   getCustomerSlaContext: async (taskId) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const task = mockTasks.find(t => t.id === taskId);
-        if (!task || !task.parent_customer_sla_id) {
-          return resolve(null);
-        }
-        
-        // This requires importing mockCustomerSlas from mockData
-        // Due to the mock nature, we'll import it at the top or dynamically
-        const customerSla = mockCustomerSlas.find(s => s.id === task.parent_customer_sla_id);
-        resolve(customerSla || null);
-      }, 300);
-    });
+    const [task, tasks] = await Promise.all([apiClient.getTaskById(taskId), apiClient.fetchTasks()]);
+    if (!task.parent_customer_sla_id) return null;
+    const internalTasks = tasks.filter(item => item.parent_customer_sla_id === task.parent_customer_sla_id).map(item => ({ id: item.id, title: item.title, owner: item.owner?.name || 'Unassigned', duration_hours: item.estimated_task_hours || 0 }));
+    return { id: task.parent_customer_sla_id, title: 'Customer delivery commitment', customer: task.customer, total_sla_hours: task.sla_hours, remaining_sla_hours: task.remaining_sla_hours, internal_tasks: internalTasks };
   },
 
   /**
    * Update a task's fields (simulated)
    */
   updateTask: async (id, updates) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // In a real app this makes a PUT/PATCH to backend
-        console.log(`Task ${id} updated with`, updates);
-        resolve({ success: true });
-      }, 400);
-    });
+    const response = await fetch(`/api/tasks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+    if (!response.ok) throw new Error('Task tidak dapat diperbarui.');
+    return response.json();
   },
 
   /**
@@ -200,8 +177,7 @@ export const apiClient = {
    * Fetch aggregated data for the Manager Dashboard
    */
   getTeamDashboardData: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
+        const tasks = await apiClient.fetchTasks();
         let overdueCount = 0;
         let atRiskCount = 0;
         let blockedCount = 0;
@@ -212,7 +188,7 @@ export const apiClient = {
         let completedSla = 0;
         let totalSlaMeasured = 0;
 
-        mockTasks.forEach(task => {
+        tasks.forEach(task => {
           const status = calculateTaskStatus(task.remaining_sla_hours, task.sla_hours);
           const isBlocked = task.dependencies && task.dependencies.some(d => d.status !== 'Resolved');
           
@@ -283,7 +259,7 @@ export const apiClient = {
         };
         const recommendedFocus = focusMap[dominantRootCause] || "Conduct operational review.";
 
-        resolve({
+        return {
           kpis: {
             slaAchievement: Math.round((completedSla / totalSlaMeasured) * 100) || 100,
             overdue: overdueCount,
@@ -302,17 +278,14 @@ export const apiClient = {
           exceptions: exceptions.sort((a, b) => a.remaining_sla_hours - b.remaining_sla_hours),
           workload: Object.values(workload).sort((a, b) => a.name.localeCompare(b.name)),
           escalations: escalations.slice(0, 5)
-        });
-      }, 400);
-    });
+        };
   },
 
   /**
    * Fetch company-wide aggregate metrics for the Director's Executive Overview
    */
   getExecutiveOverviewData: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
+        const tasks = await apiClient.fetchTasks();
         let overdueCount = 0;
         let atRiskCount = 0;
         let blockedCount = 0;
@@ -326,7 +299,7 @@ export const apiClient = {
           "Data Ops": { total: 0, onTrack: 0 }
         };
 
-        mockTasks.forEach(task => {
+        tasks.forEach(task => {
           const status = calculateTaskStatus(task.remaining_sla_hours, task.sla_hours);
           const isBlocked = task.dependencies && task.dependencies.some(d => d.status !== 'Resolved');
           
@@ -371,7 +344,7 @@ export const apiClient = {
         const totalEscalated = overdueCount + atRiskCount;
         const directorDependencyRate = totalOpen > 0 ? Math.round((directorInvolvedCount / totalOpen) * 100) : 0;
 
-        resolve({
+        return {
           slaAchievement: 88, // Overall SLA target
           weeklyExceptions: overdueCount + atRiskCount,
           pipelineValue: "$1,240,000",
@@ -388,9 +361,7 @@ export const apiClient = {
             nps: 9,
             healthScore: "92%"
           }
-        });
-      }, 400);
-    });
+        };
   },
 
   /**

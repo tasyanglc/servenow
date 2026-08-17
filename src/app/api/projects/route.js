@@ -1,10 +1,13 @@
 import { getDb } from '../../../lib/db';
+import { ensureProjectSeed, ensureTaskSeed } from '../../../lib/operationalStore';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const { rows } = await getDb().query('SELECT * FROM projects ORDER BY created_at DESC');
+    const db = getDb();
+    await Promise.all([ensureProjectSeed(db), ensureTaskSeed(db)]);
+    const { rows } = await db.query('SELECT * FROM projects ORDER BY created_at DESC');
     return Response.json(rows.map(row => ({ ...row, customerId: row.customer_id, packageId: row.package_id, workflowIds: row.workflow_ids, taskIds: row.task_ids, generatedTasks: row.generated_tasks, slaId: row.sla_id, createdAt: row.created_at })));
   } catch (error) {
     console.error('Unable to load projects', error);

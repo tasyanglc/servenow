@@ -3,6 +3,11 @@ import { customers, decisionMatrixRules, employees, escalationRules, knowledgeIt
 import { calculateTaskStatus } from '../lib/taskUtils';
 
 const delay = (value) => new Promise(resolve => setTimeout(() => resolve(value), 120));
+const fetchDomain = async (domain) => {
+  const response = await fetch(`/api/operational/${domain}`);
+  if (!response.ok) throw new Error('Data operasional tidak dapat dimuat dari database.');
+  return response.json();
+};
 const persist = async (path, payload) => {
   const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   if (!response.ok) {
@@ -34,9 +39,10 @@ const taskTypeForWorkflow = (workflow) => workflow.id === 'WF-INCIDENT' ? 'Suppo
 const taskPolicy = (type) => slaRules.find(rule => rule.type === type) || { defaultSla: 48, threshold: 25 };
 
 export const operationsService = {
-  listCustomers: () => delay(customers.map(customer => ({ ...customer, projects: projects.filter(project => project.customerId === customer.id), slas: mockCustomerSlas.filter(sla => customer.slaIds.includes(sla.id)) }))),
+  listCustomers: async () => { const databaseCustomers = await fetchDomain('customers'); return databaseCustomers.map(customer => ({ ...customer, projects: projects.filter(project => project.customerId === customer.id), slas: mockCustomerSlas.filter(sla => customer.slaIds.includes(sla.id)) })); },
   getCustomer: (id) => delay({ ...customers.find(customer => customer.id === id), projects: projects.filter(project => project.customerId === id).map(projectView), slas: mockCustomerSlas.filter(sla => customers.find(customer => customer.id === id)?.slaIds.includes(sla.id)) }),
-  listProjects: () => fetchPersistedProjects().then(saved => {
+  listProjects: () => Promise.all([fetchPersistedProjects(), fetch('/api/tasks').then(response => response.ok ? response.json() : [])]).then(([saved, databaseTasks]) => {
+    if (databaseTasks.length) mockTasks.splice(0, mockTasks.length, ...databaseTasks);
     saved.forEach(project => {
       (project.generatedTasks || []).forEach(task => { if (!taskById(task.id)) mockTasks.push(task); });
       if (!projects.some(item => item.id === project.id)) projects.push({ id: project.id, name: project.name, customerId: project.customerId, packageId: project.packageId, workflowIds: project.workflowIds || [], taskIds: project.taskIds || [], scope: project.scope, milestones: project.milestones || [], slaId: project.slaId, status: project.status, outcomeId: null, learningIds: [] });
@@ -44,7 +50,7 @@ export const operationsService = {
     return delay(projects.map(projectView));
   }),
   getProject: (id) => delay(projectView(projects.find(project => project.id === id))),
-  listServicePackages: () => delay(servicePackages.filter(item => item.active).map(item => ({ ...item, workflows: item.workflowIds.map(id => workflowTemplates.find(workflow => workflow.id === id)) }))),
+  listServicePackages: async () => { const packages = await fetchDomain('servicePackages'); const workflows = await fetchDomain('workflows'); return packages.filter(item => item.active).map(item => ({ ...item, workflows: item.workflowIds.map(id => workflows.find(workflow => workflow.id === id)) })); },
   createProject: ({ customerId, packageId, name, scope }) => {
     const customer = customers.find(item => item.id === customerId);
     const servicePackage = servicePackages.find(item => item.id === packageId);
@@ -65,7 +71,10 @@ export const operationsService = {
     const project = { id: projectId, name: name || `${customer.name} ${servicePackage.name}`, customerId, packageId, workflowIds: servicePackage.workflowIds, taskIds: projectTasks, scope: scope || servicePackage.description, milestones, slaId: customer.slaIds[0], status: 'In progress', outcomeId: null, learningIds: knowledgeItems.filter(item => servicePackage.workflowIds.includes(item.workflowId)).map(item => item.id) };
     projects.push(project);
     return persist('/api/projects', { ...project, generatedTasks: projectTasks.map(taskById).filter(Boolean) })
-      .then(() => delay(projectView(project)))
+      .then(async () => {
+        await Promise.all(projectTasks.map(taskId => persist('/api/tasks', { ...taskById(taskId), projectId })));
+        return delay(projectView(project));
+      })
       .catch(error => {
         const projectIndex = projects.findIndex(item => item.id === project.id);
         if (projectIndex >= 0) projects.splice(projectIndex, 1);
@@ -76,15 +85,15 @@ export const operationsService = {
         throw error;
       });
   },
-  listWorkflows: () => delay(workflowTemplates.map(workflow => ({ ...workflow, packages: servicePackages.filter(pkg => pkg.workflowIds.includes(workflow.id)), playbooks: knowledgeItems.filter(item => workflow.linkedPlaybookIds.includes(item.playbookId)) }))),
-  listKnowledge: () => delay(knowledgeItems.map(item => ({ ...item, sourceProject: projects.find(project => project.id === item.sourceProjectId) }))),
+  listWorkflows: async () => { const [workflows, packages, knowledge] = await Promise.all([fetchDomain('workflows'), fetchDomain('servicePackages'), fetchDomain('knowledge')]); return workflows.map(workflow => ({ ...workflow, packages: packages.filter(pkg => pkg.workflowIds.includes(workflow.id)), playbooks: knowledge.filter(item => workflow.linkedPlaybookIds.includes(item.playbookId)) })); },
+  listKnowledge: async () => { const items = await fetchDomain('knowledge'); return items.map(item => ({ ...item, sourceProject: projects.find(project => project.id === item.sourceProjectId) })); },
   listPilots: () => delay(pilots.map(pilot => ({ ...pilot, customer: customers.find(c => c.id === pilot.customerId), workflow: workflowTemplates.find(w => w.id === pilot.workflowId), package: servicePackages.find(p => p.id === pilot.packageId) }))),
   listOutcomes: () => delay(outcomes.map(outcome => ({ ...outcome, customer: customers.find(c => c.id === outcome.customerId), project: projects.find(p => p.id === outcome.projectId) }))),
-  getOrganization: () => delay({ leadership, employees, divisions: ['Teknologi', 'Implementasi', 'Support', 'Sales', 'Administrasi'].map(department => ({ department, manager: leadership.find(person => person.level === 'Manager' && person.department === department), employees: employees.filter(employee => employee.department === department) })) }),
+  getOrganization: async () => { const [databaseLeadership, databaseEmployees] = await Promise.all([fetchDomain('leadership'), fetchDomain('employees')]); return { leadership: databaseLeadership, employees: databaseEmployees, divisions: ['Teknologi', 'Implementasi', 'Support', 'Sales', 'Administrasi'].map(department => ({ department, manager: databaseLeadership.find(person => person.level === 'Manager' && person.department === department), employees: databaseEmployees.filter(employee => employee.department === department) })) }; },
   listBlueprints: () => delay(sectorBlueprints.map(blueprint => ({ ...blueprint, package: servicePackages.find(pkg => pkg.id === blueprint.packageId), workflows: blueprint.workflowIds.map(id => workflowTemplates.find(w => w.id === id)), playbooks: knowledgeItems.filter(item => blueprint.playbookIds.includes(item.playbookId)) }))),
   getTaskContext: (taskId) => { const task = taskById(taskId); const customer = customerByName(task?.customer); const project = projects.find(p => p.taskIds.includes(taskId)); return delay({ task, customer, project: project && projectView(project), workflow: project && workflowTemplates.find(w => w.id === project.workflowIds[0]), sla: mockCustomerSlas.find(s => s.id === task?.parent_customer_sla_id), dependencies: task?.dependencies?.map(dep => ({ ...dep, downstreamImpact: dep.status === 'Delayed' ? `${task.title} is blocked and its project SLA is at risk.` : 'No current downstream impact.' })) || [], knowledge: project ? knowledgeItems.filter(item => item.workflowId === project.workflowIds[0]) : [] }); },
   getCapacityRecommendations: (taskId) => { const task = taskById(taskId); return delay(employees.map(employee => ({ ...employee, workloadRatio: workload(employee), activeTasks: mockTasks.filter(t => t.owner?.initials === employee.initials), skillMatch: (task.required_skills || [task.department]).filter(skill => employee.skills.includes(skill)).length, suitable: employee.availability === 'Available' && workload(employee) < 90 })).sort((a, b) => Number(b.suitable) - Number(a.suitable) || b.skillMatch - a.skillMatch || a.workloadRatio - b.workloadRatio)); },
-  getMonitoring: () => { const taskStates = mockTasks.map(task => ({ ...task, slaState: calculateTaskStatus(task.remaining_sla_hours, task.sla_hours), blocked: task.dependencies?.some(dep => dep.status !== 'Resolved') })); return delay({ projects: projects.map(projectView), workflows: workflowTemplates.map(workflow => ({ name: workflow.name, progress: projects.filter(p => p.workflowIds.includes(workflow.id)).length ? 50 : 0 })), capacity: employees.map(employee => ({ ...employee, workloadRatio: workload(employee) })), blockedTasks: taskStates.filter(task => task.blocked), bottlenecks: taskStates.filter(task => task.dependencies?.some(dep => dep.status === 'Delayed')), interventions: mockTasks.flatMap(task => task.intervention_history || []), escalations: mockTasks.flatMap(task => task.escalation_history || []) }); },
+  getMonitoring: async () => { const [tasks, organization, monitoredProjects, workflows] = await Promise.all([fetch('/api/tasks').then(response => response.ok ? response.json() : []), operationsService.getOrganization(), operationsService.listProjects(), operationsService.listWorkflows()]); const taskStates = tasks.map(task => ({ ...task, slaState: calculateTaskStatus(task.remaining_sla_hours, task.sla_hours), blocked: task.dependencies?.some(dep => dep.status !== 'Resolved') })); return { projects: monitoredProjects, workflows: workflows.map(workflow => ({ name: workflow.name, progress: monitoredProjects.filter(project => project.workflowIds.includes(workflow.id)).length ? 50 : 0 })), capacity: organization.employees.map(employee => ({ ...employee, workloadRatio: workload(employee), activeTasks: tasks.filter(task => task.owner?.initials === employee.initials) })), blockedTasks: taskStates.filter(task => task.blocked), bottlenecks: taskStates.filter(task => task.dependencies?.some(dep => dep.status === 'Delayed')), interventions: tasks.flatMap(task => task.intervention_history || []), escalations: tasks.flatMap(task => task.escalation_history || []) }; },
   getSlaRules: () => delay([...slaRules]),
   updateSlaRule: (id, patch) => { const rule = slaRules.find(item => item.id === id); if (!rule) return Promise.reject(new Error('SLA rule not found')); Object.assign(rule, patch); return delay({ ...rule }); },
   getEscalationRules: () => delay([...escalationRules]),
