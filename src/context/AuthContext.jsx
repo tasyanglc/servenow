@@ -7,7 +7,7 @@ export const AuthContext = createContext({});
 const employeeWorkspace = ['/my-work', '/tasks', '/projects', '/knowledge'];
 const deliveryManagerWorkspace = [...employeeWorkspace, '/team-dashboard', '/workflows', '/interventions', '/escalations'];
 const salesWorkspace = ['/my-work', '/tasks', '/projects', '/knowledge', '/sales', '/sales/pipeline', '/sales/deals'];
-const adminWorkspace = ['/my-work', '/tasks', '/projects', '/knowledge', '/admin/users', '/admin/roles', '/admin/sla-rules', '/admin/escalation-rules', '/admin/audit-log'];
+const adminWorkspace = ['/my-work', '/tasks', '/projects', '/knowledge', '/admin/users', '/admin/import', '/admin/roles', '/admin/sla-rules', '/admin/escalation-rules', '/admin/audit-log'];
 
 export const ROLE_CONFIG = {
   'Direktur Utama': { name: 'Arif Pratama', title: 'Direktur Utama', initials: 'DU', color: 'bg-indigo-600', level: 'C-Level', division: 'Executive', defaultPath: '/overview', allowedPaths: [...deliveryManagerWorkspace, ...salesWorkspace, ...adminWorkspace, '/overview', '/customer-zero', '/reports'] },

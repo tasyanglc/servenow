@@ -17,6 +17,7 @@ const NAVIGATION = [
   { name: 'Reports', path: '/reports', icon: '▤' },
   { type: 'header', name: 'ADMIN' },
   { name: 'Admin Configuration', path: '/admin/users', icon: '⚙' },
+  { name: 'Import Historical Data', path: '/admin/import', icon: '⇧' },
 ];
 
 export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPaths }) {
