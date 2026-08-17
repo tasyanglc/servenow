@@ -1,1 +1,5 @@
-'use client'; import DashboardLayout from '../../components/DashboardLayout'; import { WorkflowLibrary } from '../../components/operations/OperationalViews'; export default function Page(){ return <DashboardLayout><WorkflowLibrary /></DashboardLayout>; }
+'use client';
+import DashboardLayout from '../../components/DashboardLayout';
+import WorkflowsWorkspace from '../../components/operations/WorkflowsWorkspace';
+
+export default function Page() { return <DashboardLayout><WorkflowsWorkspace /></DashboardLayout>; }
