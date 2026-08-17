@@ -13,6 +13,27 @@ export default function SalesPage() {
   const [editingDeal, setEditingDeal] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [activeTab, setActiveTab] = useState('registry'); // 'registry' or 'expand'
+
+  // Mock Expansion Opportunities (Land & Expand)
+  const expansionClients = [
+    {
+      name: "Client ABC",
+      branches: [
+        { name: "Jakarta", product: "Core Workforce OS", value: 200000, stage: "Contract", nextAction: "Signature collection" },
+        { name: "Bandung", product: "None (Upsell Opportunity)", value: 80000, stage: "Demo", nextAction: "Schedule deep-dive demo" },
+        { name: "Surabaya", product: "None (Upsell Opportunity)", value: 120000, stage: "Lead", nextAction: "Qualify expansion fit" },
+        { name: "Medan", product: "None (Upsell Opportunity)", value: 100000, stage: "Meeting", nextAction: "Present branch proposal" }
+      ]
+    },
+    {
+      name: "Acme Corporation",
+      branches: [
+        { name: "Singapore", product: "Analytics Suite", value: 150000, stage: "Proposal", nextAction: "Present SLA results" },
+        { name: "Kuala Lumpur", product: "None (Upsell Opportunity)", value: 90000, stage: "Lead", nextAction: "Contact branch operations lead" }
+      ]
+    }
+  ];
 
   useEffect(() => {
     loadDeals();
@@ -103,66 +124,130 @@ export default function SalesPage() {
           <KpiCard title="Sales Deleg. Rate" value={`${100 - founderDependencyRate}%`} status="ON TRACK" />
         </div>
 
-        {/* Deals Database */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-slate-800">Company Sales Register</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="text-slate-400 font-semibold border-b border-slate-100 bg-slate-50/20">
-                  <th className="p-4">Account</th>
-                  <th className="p-4">Owner</th>
-                  <th className="p-4">Stage</th>
-                  <th className="p-4">Value</th>
-                  <th className="p-4">Prob.</th>
-                  <th className="p-4">Progressive Level</th>
-                  <th className="p-4">Founder Involved</th>
-                  <th className="p-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {deals.map(deal => (
-                  <tr key={deal.id} className="hover:bg-slate-50">
-                    <td className="p-4 font-medium text-slate-800">{deal.account}</td>
-                    <td className="p-4 text-slate-600">{deal.owner}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 font-medium">
-                        {deal.stage}
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono font-semibold">${deal.value.toLocaleString()}</td>
-                    <td className="p-4 font-mono">{(deal.probability * 100).toFixed(0)}%</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        deal.progressiveOwnership === 'Own' ? 'bg-emerald-100 text-emerald-800' :
-                        deal.progressiveOwnership === 'Lead' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {deal.progressiveOwnership}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {deal.founderInvolvement ? (
-                        <span className="text-rose-600 font-semibold">Yes</span>
-                      ) : (
-                        <span className="text-slate-400">No</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button 
-                        onClick={() => handleEditClick(deal)}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded"
-                      >
-                        Edit Deal
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* Tab Selection */}
+        <div className="flex border-b border-slate-200 gap-4">
+          <button 
+            onClick={() => setActiveTab('registry')}
+            className={`pb-2.5 text-xs font-bold border-b-2 transition-colors ${
+              activeTab === 'registry' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'
+            }`}
+          >
+            Deals Registry
+          </button>
+          <button 
+            onClick={() => setActiveTab('expand')}
+            className={`pb-2.5 text-xs font-bold border-b-2 transition-colors ${
+              activeTab === 'expand' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'
+            }`}
+          >
+            Land & Expand (Branch Tree)
+          </button>
         </div>
+
+        {activeTab === 'registry' ? (
+          /* Deals Database */
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-semibold text-slate-800">Company Sales Register</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="text-slate-400 font-semibold border-b border-slate-100 bg-slate-50/20">
+                    <th className="p-4">Account</th>
+                    <th className="p-4">Owner</th>
+                    <th className="p-4">Stage</th>
+                    <th className="p-4">Value</th>
+                    <th className="p-4">Prob.</th>
+                    <th className="p-4">Progressive Level</th>
+                    <th className="p-4">Founder Involved</th>
+                    <th className="p-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {deals.map(deal => (
+                    <tr key={deal.id} className="hover:bg-slate-50">
+                      <td className="p-4 font-medium text-slate-800">{deal.account}</td>
+                      <td className="p-4 text-slate-600">{deal.owner}</td>
+                      <td className="p-4">
+                        <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 font-medium">
+                          {deal.stage}
+                        </span>
+                      </td>
+                      <td className="p-4 font-mono font-semibold">${deal.value.toLocaleString()}</td>
+                      <td className="p-4 font-mono">{(deal.probability * 100).toFixed(0)}%</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          deal.progressiveOwnership === 'Own' ? 'bg-emerald-100 text-emerald-800' :
+                          deal.progressiveOwnership === 'Lead' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {deal.progressiveOwnership}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        {deal.founderInvolvement ? (
+                          <span className="text-rose-600 font-semibold">Yes</span>
+                        ) : (
+                          <span className="text-slate-400">No</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button 
+                          onClick={() => handleEditClick(deal)}
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded"
+                        >
+                          Edit Deal
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* Land & Expand Branch Tree view */
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">Account Branch Opportunities</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Tracking branch-level adoption and expansion pipeline.</p>
+            </div>
+            
+            <div className="space-y-4">
+              {expansionClients.map(client => (
+                <div key={client.name} className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
+                  <h4 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                    🏢 {client.name}
+                  </h4>
+                  
+                  <div className="pl-6 border-l-2 border-indigo-200 space-y-3 relative">
+                    {client.branches.map(branch => (
+                      <div key={branch.name} className="flex justify-between items-center bg-white p-3 rounded border border-slate-100 shadow-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-800">{branch.name} Branch</span>
+                            <span className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded border border-slate-150">{branch.product}</span>
+                          </div>
+                          <span className="block text-[10px] text-slate-500">
+                            <strong>Next Action:</strong> {branch.nextAction}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-bold text-slate-700 uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                            {branch.stage}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-indigo-700">
+                            +${branch.value.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Inline Edit Form Modal/Section */}
         {editingDeal && (

@@ -44,7 +44,7 @@ export const ROLE_CONFIG = {
     color: "bg-orange-500",
     defaultPath: "/sales/pipeline",
     allowedPaths: [
-      "/sales/pipeline", "/customer-zero", "/my-work"
+      "/sales", "/sales/pipeline", "/customer-zero", "/my-work"
     ]
   },
   "Admin": {

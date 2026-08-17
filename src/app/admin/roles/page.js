@@ -1,16 +1,66 @@
 'use client';
+import React from 'react';
 import DashboardLayout from '../../../components/DashboardLayout';
-import { useAuth } from '../../../context/AuthContext';
+import PageHeader from '../../../components/ui/PageHeader';
 
-export default function Page() {
-  const { activeRole } = useAuth();
+export default function AdminRolesPage() {
+  const roles = [
+    {
+      name: "Director",
+      description: "Company-wide executive dashboard, operational overview, cross-department tracking, and sales analytics.",
+      paths: ["/overview", "/tasks", "/risk-monitor", "/root-causes", "/sales", "/customer-zero", "/organization", "/escalations"]
+    },
+    {
+      name: "Manager",
+      description: "Team performance tracking, department tasks, operational exceptions, workload management, and interventions.",
+      paths: ["/team-dashboard", "/my-work", "/team-tasks", "/risk-monitor", "/interventions", "/workload", "/escalations"]
+    },
+    {
+      name: "Employee",
+      description: "Personal inbox, task assignment, personal SLA indicators, and escalation trail inputs.",
+      paths: ["/my-work", "/my-performance", "/team-status"]
+    },
+    {
+      name: "Sales Executive",
+      description: "Editable access to own pipeline deals, read-only team sales board, and Customer Zero validation indicators.",
+      paths: ["/sales", "/sales/pipeline", "/customer-zero", "/my-work"]
+    },
+    {
+      name: "Admin",
+      description: "Full configuration control, role scopes, users CRUD, default SLA policies, and security audit logs.",
+      paths: ["/admin/users", "/admin/roles", "/admin/sla-rules", "/admin/escalation-rules", "/admin/audit-log"]
+    }
+  ];
+
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <h1 className="text-2xl font-bold text-slate-800 mb-2">Admin Roles</h1>
-        <p className="text-slate-500 text-sm mb-4">This page follows the PRD scope restrictions.</p>
-        <div className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded border border-indigo-100 text-xs font-semibold">
-          Active Identity: {activeRole}
+      <div className="space-y-6 max-w-7xl">
+        <PageHeader 
+          title="Role Scopes & Permissions" 
+          subtitle="System definition of role descriptions and allowed path boundaries."
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {roles.map(role => (
+            <div key={role.name} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 className="text-sm font-bold text-slate-800">{role.name}</h3>
+                <span className="text-[10px] font-mono text-slate-400">System Role</span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">{role.description}</p>
+              
+              <div>
+                <span className="block text-[9px] uppercase font-bold text-slate-450 mb-1.5">Allowed Path Gateways</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {role.paths.map(p => (
+                    <code key={p} className="text-[10px] bg-slate-50 border border-slate-150 px-2 py-0.5 rounded text-indigo-600">
+                      {p}
+                    </code>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </DashboardLayout>
