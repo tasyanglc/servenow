@@ -10,6 +10,7 @@ import AiWeeklySummary from '../../components/dashboard/AiWeeklySummary';
 
 import DashboardLayout from '../../components/DashboardLayout';
 import { operationsService } from '../../services/operationsService';
+import Link from 'next/link';
 
 export default function TeamDashboardPage() {
   const [data, setData] = useState(null);
@@ -37,6 +38,13 @@ export default function TeamDashboardPage() {
         />
 
         <AiWeeklySummary weeklySummary={data.weeklySummary} />
+
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Link href="/risk-monitor" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Detect</span><span className="text-sm font-semibold">SLA Risk Queue</span></Link>
+          <Link href="/root-causes" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Analyze</span><span className="text-sm font-semibold">Root Causes</span></Link>
+          <Link href="/interventions" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Decide</span><span className="text-sm font-semibold">Interventions</span></Link>
+          <Link href="/escalations" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-300"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Monitor</span><span className="text-sm font-semibold">Escalations</span></Link>
+        </div>
 
         {/* KPI Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -4,14 +4,18 @@ import { useAuth } from '../../context/AuthContext';
 export default function Topbar() {
   const { activeRole, changeRole, userConfig, allRoles } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const roleGroups = ['C-Level', 'Manager', 'Employee'].map(level => ({
+    level,
+    roles: Object.entries(allRoles).filter(([, config]) => config.level === level)
+  }));
 
   return (
-    <header className="h-16 px-8 flex items-center justify-between bg-white border-b border-slate-200 shrink-0 z-10 shadow-sm relative">
+    <header className="relative z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 shadow-sm">
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold text-slate-900 leading-tight">Good morning, {userConfig.name.split(' ')[0]} 👋</h1>
       </div>
       <div className="relative">
-        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 pl-2 border-l border-slate-200">
+        <button onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} aria-haspopup="menu" className="flex items-center gap-2 pl-2 border-l border-slate-200">
           <div className={`w-8 h-8 rounded-full ${userConfig.color} flex items-center justify-center text-white text-xs font-semibold shadow-sm`}>
             {userConfig.initials}
           </div>
@@ -21,23 +25,33 @@ export default function Topbar() {
           </div>
         </button>
         {isOpen && (
-          <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-100 rounded-xl shadow-xl py-2 z-50">
-            <div className="px-4 py-2 border-b border-slate-100 mb-1">
-               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Switch Context (Dev Only)</span>
+          <div role="menu" className="absolute right-0 top-full z-[60] mt-2 w-80 max-h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-100 bg-white px-4 py-3">
+               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Switch Context (Dev Only)</span>
+               <p className="mt-0.5 text-xs text-slate-500">Choose a role scope to preview its workspace.</p>
             </div>
-            {Object.keys(allRoles).map((role) => (
-              <button 
-                key={role} 
-                onClick={() => { changeRole(role); setIsOpen(false); }} 
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-slate-50 ${activeRole === role ? 'bg-slate-50' : ''}`}
-              >
-                <div className={`w-7 h-7 rounded-full ${allRoles[role].color} flex items-center justify-center text-white text-[10px] font-bold`}>{allRoles[role].initials}</div>
-                <div className="flex flex-col">
-                  <span className={`text-xs ${activeRole === role ? 'font-bold text-indigo-700' : 'font-medium text-slate-700'}`}>{allRoles[role].name}</span>
-                  <span className="text-[10px] text-slate-500">{allRoles[role].title}</span>
+            <div className="max-h-[calc(100vh-9.5rem)] overflow-y-auto overscroll-contain py-2 custom-scrollbar">
+              {roleGroups.map(group => (
+                <div key={group.level} className="py-1">
+                  <div className="border-y border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{group.level}</div>
+                  {group.roles.map(([role, config]) => (
+                    <button
+                      key={role}
+                      role="menuitem"
+                      onClick={() => { changeRole(role); setIsOpen(false); }}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 ${activeRole === role ? 'bg-indigo-50/70' : ''}`}
+                    >
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.color} text-[10px] font-semibold text-white`}>{config.initials}</div>
+                      <div className="min-w-0 flex-1">
+                        <span className={`block truncate text-xs ${activeRole === role ? 'font-semibold text-indigo-700' : 'font-medium text-slate-700'}`}>{config.name}</span>
+                        <span className="block truncate text-[10px] text-slate-500">{config.title}</span>
+                      </div>
+                      {activeRole === role && <span className="text-[10px] font-semibold text-indigo-600">Active</span>}
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

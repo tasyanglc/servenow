@@ -41,6 +41,42 @@ export const SIDEBAR_STRUCTURE = [
   { name: "Audit Log", path: "/admin/audit-log", icon: "⚙️" }
 ];
 
+// The deck's operating model is exposed as a complete flow: operate, control,
+// learn and scale. Supporting commercial and admin tools remain accessible.
+const OPERATIONAL_NAVIGATION = [
+  { type: 'header', name: 'WORKSPACE' },
+  { name: 'My Role Workspace', path: '/role-dashboard', icon: '•' },
+  { name: 'Executive Overview', path: '/overview', icon: '•' },
+  { name: 'Organization', path: '/organization', icon: '•' },
+  { type: 'header', name: '01 OPERATE' },
+  { name: 'Customers', path: '/customers', icon: '•' },
+  { name: 'Projects', path: '/projects', icon: '•' },
+  { name: 'Workflow Library', path: '/workflows', icon: '•' },
+  { name: 'All Tasks', path: '/tasks', icon: '•' },
+  { name: 'My Work', path: '/my-work', icon: '•' },
+  { type: 'header', name: '02 CONTROL' },
+  { name: 'Control Center', path: '/team-dashboard', icon: '•' },
+  { name: 'SLA Risk Monitor', path: '/risk-monitor', icon: '•' },
+  { name: 'Root Cause Analysis', path: '/root-causes', icon: '•' },
+  { name: 'Capacity & Allocation', path: '/workload', icon: '•' },
+  { name: 'Interventions', path: '/interventions', icon: '•' },
+  { name: 'Escalations', path: '/escalations', icon: '•' },
+  { type: 'header', name: '03 LEARN & SCALE' },
+  { name: 'Knowledge & Playbooks', path: '/knowledge', icon: '•' },
+  { name: 'Workflow Pilots', path: '/pilots', icon: '•' },
+  { name: 'Outcomes', path: '/outcomes', icon: '•' },
+  { type: 'header', name: 'COMMERCIAL' },
+  { name: 'Sales System', path: '/sales', icon: '•' },
+  { name: 'Sales Pipeline', path: '/sales/pipeline', icon: '•' },
+  { name: 'Customer Zero', path: '/customer-zero', icon: '•' },
+  { type: 'header', name: 'ADMINISTRATION' },
+  { name: 'Users', path: '/admin/users', icon: '•' },
+  { name: 'Roles', path: '/admin/roles', icon: '•' },
+  { name: 'SLA Rules', path: '/admin/sla-rules', icon: '•' },
+  { name: 'Escalation Rules', path: '/admin/escalation-rules', icon: '•' },
+  { name: 'Audit Log', path: '/admin/audit-log', icon: '•' }
+];
+
 export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPaths }) {
   // The navigation is role-scoped and may change after a development route refresh.
   // Render a stable shell for SSR/hydration, then hydrate the current role's links.
@@ -65,7 +101,7 @@ export default function Sidebar({ isCollapsed, onToggle, currentPath, allowedPat
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1 custom-scrollbar">
-        {isMounted && SIDEBAR_STRUCTURE.map((item, idx) => {
+        {isMounted && OPERATIONAL_NAVIGATION.map((item, idx) => {
           if (item.type === "header") {
             if (isCollapsed) return <div key={idx} className="h-px bg-slate-800 my-2"></div>;
             return <div key={idx} className="text-[10px] font-bold text-slate-500 tracking-widest uppercase mt-4 mb-1 px-3">{item.name}</div>;
